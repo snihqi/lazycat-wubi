@@ -1,0 +1,278 @@
+/* ============================================================================
+   懒猫五笔 · 设计令牌
+
+   一句话：一间只在夜里开的打字教室 —— 深靛的底、霓虹的边、白得像灯的纸。
+          彩色只有两件正经事：**青**表示「正在发生」，**粉**表示「出错了」；
+          其余五种（红橙绿蓝紫）留给五笔的码位，别处一律不抢。
+
+   底色用**靛紫**（H258–264）：比蓝黑暖，比纯黑有层次。
+   霓虹只出现在**边**和**光**上（1px 渐变描边、hover 的一圈扩散），
+   不做大面积色块 —— 大色块显廉价，不是显潮。
+   五码色用高亮版（深底上亮色才够分离），但**不加发光**：
+   它们是「资料」不是「装饰」，发光会让两笔糊在一起。
+
+   使用约定（违反会破坏整套语义）：
+   · --zone-*      只允许出现在「字根字形填充」「键帽字母」「码位格/拆字图」。
+                   禁止出现在通用组件的 border / background 上，也一律不加发光。
+   · --accent      青。唯一的「进行中」语义：进度、当前字、焦点、选中的时长。
+   · --accent-2    粉。**只做渐变装饰**（顶栏那条边、卡片 hover 描边、品牌），
+                   不做文字色、不做按钮底。
+   · --danger      洋红偏红。只给「错」与「删除」。
+   · 发光只用 --sh-* / --glow-*，最多两层（一层描边级 + 一层扩散级）。
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* ── 1. 底色：4 层（夜 → 地 → 卡 → 凹槽）──────────────────────────────
+     色相挂在 258–264（靛紫），饱和度都压得很低（<35%）。
+     底色一旦「紫得发亮」，霓虹就没有暗可以对照，整页会糊成一片。 */
+  --bg-void:    #08060F;
+  --bg-card:    #14102A;
+  --bg-card-a:  #14102A;   /* 卡片实际使用值。**不透明**：深底上半透明卡片
+                              会把背后的霓虹透上来，11–12px 元信息直接掉到 4:1 以下。 */
+  --bg-raised:  #1B1536;
+  --bg-inset:   #0D0A1C;
+  --bg-hud:     rgba(9, 6, 20, 0.82);
+  /* 练习页那张「纸」。
+     **不能压太黑**：纸越黑 → 注视区外的视野越暗 → 瞳孔越大 →
+     亮字的视网膜弥散圆越大，那圈「光晕」反而更明显（halation = 亮度 × 瞳孔）。
+     而且压到近黑之后，纸和页底只剩 1.04:1，960 宽的纸会直接消失。
+     #1A1433 是这条线的平衡点：**实测**纸侧与页底 1.078:1
+     （门槛 1.05、目标 1.10；四角略高，因为粉/青灯压着上缘），
+     96px 大字对纸 12.5:1（够亮但不刺）。 */
+  --bg-paper:   #1E1739;
+
+  /* ── 2. 描边：3 档 + 控件档 ───────────────────────────────────────── */
+  --line-1:     rgba(148, 139, 173, 0.26);
+  /* 纸边：**唯一**负责「纸浮起来了」的 1px。禁 dashed、禁 0.5px、禁 hover 过渡。 */
+  --stroke:     rgba(148, 139, 173, 0.30);
+  --line-2:     #322858;
+  --line-3:     #4A3D7C;
+  --line-ctl:   #7A67BC;   /* 控件描边 3.77:1（1px 抗锯齿后会掉到 3.2，所以要留余量） */
+
+  /* ── 3. 文字：4 档 + 3 档专用 ─────────────────────────────────────── */
+  --ink-1:      #F3EEFF;
+  --ink-2:      #B9B0CE;
+  --ink-3:      #8A81A0;
+  --ink-4:      #7E7597;
+  --ink-done:   #6E6590;   /* 仅 ≥28px 大字 */
+  /* 待打正文。**不是纯白**：纯白 + 96px + 发光 = halation（笔画周围起雾），
+     这是「打一会儿就头晕」的主因。 #DCD6EA 在纸上 13.5:1，
+     仍是全场最亮的东西，但没有 100% 亮度那种「刺」的感觉。 */
+  --ink-read:   #DCD6EA;
+
+  /* ── 4. 强调：青（进行中）+ 粉（装饰）+ 洋红（错）──────────────────── */
+  --accent:      #2FE6FF;
+  --accent-hi:   #84F1FF;
+  --accent-a: rgba(47, 230, 255, 0.10);
+  --accent-b: rgba(47, 230, 255, 0.34);
+  --accent-c: rgba(47, 230, 255, 0.55);
+
+  --accent-2:      #FF3E9D;
+  --accent-2-b: rgba(255, 62, 157, 0.45);
+
+  /* ── 全站唯一的一条渐变（粉 → 紫 → 青）─────────────────────────────
+     顶栏底缘、组标题下划线、卡片大字、进度条，全都从这三站取色。
+     用户的说法是「紫色青色渐变」——视觉上确实读成紫青，
+     因为 45% 那一站是紫。改这里一个值，整站跟着变。 */
+
+  /* 错色降一档：#FF4D7E（L*74、10.3:1）在暗底上本身就是个小灯泡。
+     #FF8FA6 的亮度接近 --ink-2，所以「错」这件事必须另有形状线索 ——
+     好在我们的错误提示是句子（「打错了，再打一次」），不靠颜色单独承载语义。 */
+  --danger:      #FF8FA6;
+  --danger-hi:   #FFA9BB;
+  --danger-a: rgba(255, 143, 166, 0.10);
+
+  --warn:      #FFC24B;
+  --warn-hi:   #FFD782;
+
+  /* ── 5. 阴影 / 光 ──────────────────────────────────────────────────
+     深底上投影几乎看不见，层次靠描边 + 一层极淡的扩散光。
+     发光色只允许强调青，且只出现在 hover / 焦点 / 当前这些瞬时态。 */
+  --sh-xs:  0 1px 2px rgba(0, 0, 0, 0.45);
+  --sh-md:  0 2px 10px rgba(0, 0, 0, 0.50), 0 0 22px -12px var(--accent-c);
+  --sh-lg:  0 16px 40px -20px rgba(0, 0, 0, 0.75), 0 0 40px -18px var(--accent-c);
+
+  --edge-hi:      inset 0 1px 0 rgba(170, 195, 255, 0.07);
+
+  --shadow-2:     0 24px 52px -24px rgba(0, 0, 0, 0.85),
+                  0 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-modal: 0 40px 90px -24px rgba(0, 0, 0, 0.92),
+                  0 0 60px -30px var(--accent-c);
+
+  /* ── 6. 五码语义色（第 1/2/3/4 码 + 识别码）────────────────────────
+     深底必须用高亮版：v2.0 的压暗版（#B84945 …）在 #14102A 上只有 2.4–3:1。
+     色相 352 / 42 / 158 / 214 / 272，两两差 ≥35°。 */
+  --zone-1:      #FF6B81;
+  --zone-2:      #FFC24B;
+  --zone-3:      #3DE8A0;
+  --zone-4:      #5AA9FF;
+  --zone-5:      #B98BFF;
+
+  /* ── 7. 字体：零外链，全系统栈 ────────────────────────────────────── */
+  --ff-display: "Bahnschrift", "DIN Alternate", "DIN Condensed",
+                "Avenir Next Condensed", "Oswald", "Helvetica Neue", Arial,
+                sans-serif;
+  --ff-ui: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+           "Noto Sans SC", "Source Han Sans SC", system-ui, -apple-system, sans-serif;
+  --ff-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono",
+             Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* ── 8. 字号阶梯 ─────────────────────────────────────────────────── */
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-15: 15px;
+  --fs-16: 16px;
+  --fs-18: 18px;
+  --fs-22: 22px;
+  --fs-27: 27px;
+  --fs-28: 28px;
+  --fs-72: 72px;
+  --fs-96: 96px;
+
+  --lh-base:  1.7;
+  --lh-type:  1.95;
+
+  --ls-label: 0.08em;
+  --ls-plate: 0.14em;
+  --ls-cjk:   0.02em;
+  --ls-code:  0.16em;
+
+  /* ── 9. 字重 ─────────────────────────────────────────────────────── */
+  --fw-r:  400;
+  --fw-m:  500;
+  --fw-sb: 600;
+  --fw-b:  700;
+
+  /* ── 10. 间距基数 4px ────────────────────────────────────────────── */
+  --sp-1: 4px;   --sp-2: 8px;   --sp-3: 12px;  --sp-4: 16px;
+  --sp-5: 20px;  --sp-6: 24px;  --sp-7: 32px;  --sp-8: 40px;
+
+  /* ── 11. 圆角：比 v1.0 软一档（机器感 → 界面感）──────────────────── */
+  --r-1: 5px;
+  --r-2: 8px;
+  --r-3: 10px;
+  --r-4: 14px;
+  --r-5: 18px;
+  --r-full: 999px;
+
+  /* ── 12. 描边宽度 ────────────────────────────────────────────────── */
+
+  /* ── 13. 动效：只在过渡里用，没有常驻循环 ────────────────────────── */
+  --t-0: 80ms;
+  --t-1: 120ms;
+  --t-2: 180ms;
+  --t-3: 260ms;
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --t-busy: 900ms;
+
+  /* ── 14. 焦点环 ──────────────────────────────────────────────────── */
+  --focus-ring: 2px;
+  --focus-gap:  3px;
+
+  /* ── 15. 布局常量 ────────────────────────────────────────────────── */
+  --w-page: 1120px;
+  --w-read: 880px;
+  --h-topbar: 56px;
+  --h-meters: 64px;
+
+  /* ── 16. 层级 ────────────────────────────────────────────────────── */
+  --z-content: 1;
+  --z-sticky: 20;
+  --z-pop: 40;
+  --z-toast: 60;
+}
+
+/* ============================================================================
+   基座：所有页面共享的「底 + 字 + 盒模型」。
+   ========================================================================== */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--bg-void);
+}
+
+/* 环境：两盏霓虹（左粉右青）打在天上 + 一层靛紫渐变。
+   **没有扫描线、没有脉动** —— 这一版要的是「年轻的暗」，
+   不是「机房里的警报灯」：会自己动的元素一个都不做。 */
+body {
+  margin: 0;
+  min-height: 100%;
+  color: var(--ink-1);
+  font-family: var(--ff-ui);
+  font-size: var(--fs-14);
+  font-weight: var(--fw-r);
+  line-height: var(--lh-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-void);
+  /* 三盏灯：**半径放大一倍、透明度砍半**。
+     原来 880px/α.18 的光斑等于在视口顶部放了一块「比自己周围亮」的区域，
+     眼睛每次扫过都要重新适应；放大到 1200px 之后它退成一整片环境色，
+     不再是「一个光斑」。 */
+  background-image:
+    radial-gradient(circle 1408px at 1% -13%, rgba(255, 62, 157, 0.042), transparent 60%),
+    radial-gradient(circle 1536px at 99% -11%, rgba(47, 230, 255, 0.030), transparent 60%),
+    radial-gradient(circle 1920px at 50% 114%, rgba(120, 77, 255, 0.046), transparent 60%),
+    linear-gradient(180deg, #0D0822 0%, #09061A 46%, #06040F 100%);
+  background-attachment: fixed;
+}
+
+/* 细网：64px 一格，只存在于页面上半部（mask 渐隐到底）。
+   深底上它是「空气里的颗粒」，不是「表格」——所以 alpha 压到 0.035。 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(150, 170, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(150, 170, 255, 0.035) 1px, transparent 1px);
+  background-size: 64px 64px, 64px 64px;
+  -webkit-mask-image: radial-gradient(130% 90% at 50% -10%, #000 4%, rgba(0, 0, 0, 0.45) 52%, transparent 88%);
+          mask-image: radial-gradient(130% 90% at 50% -10%, #000 4%, rgba(0, 0, 0, 0.45) 52%, transparent 88%);
+}
+
+.num,
+.tnum {
+  font-family: var(--ff-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: 0;
+}
+
+.plate {
+  font-family: var(--ff-display);
+  font-weight: var(--fw-b);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-plate);
+}
+
+:focus-visible {
+  outline: var(--focus-ring) solid var(--accent);
+  outline-offset: var(--focus-gap);
+}
+
+.cdel:focus-visible { outline-offset: -2px; }
+.key:focus-visible  { outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+

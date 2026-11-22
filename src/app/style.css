@@ -1,0 +1,3462 @@
+@import './tokens.css';
+
+/* 懒猫五笔 · 应用样式
+   ------------------------------------------------------------------
+   令牌来自 src/app/tokens.css（唯一来源）。这个文件只写「布局 + 组件」。
+
+   三条纪律，改之前先读：
+   1. 背景只有一处定义 —— tokens.css 的 body（三层环境光 + 双频网格）。
+      这里**不许**再写任何 body background，否则会盖掉环境光，
+      页面立刻退回一片均匀的深灰，层次全无。
+   2. 发光按级（9 / 20 / 34）取令牌，不自己拼 box-shadow。
+      一屏预算：L3（34px）恰好 1、L2（20px）≤3、L1（9px）不限但必须单层。
+   3. 五区色（--zone-*）只出现在字形填充 / 键帽字母 / 码位格，
+      不染通用组件的 border / background / box-shadow，也不发光。
+   ------------------------------------------------------------------ */
+
+html,
+body {
+  height: 100%;
+}
+
+/* 「受光顶边」：浅底上这条边是**纯白**，只用在卡片 / 面板 / 纸张 / 拆解条的
+   上边框 —— 白纸的边沿压住光，比任何投影都便宜。
+   migration 里 B-06/B-09/B-16/B-19 四处都直接写这个色值，这里收成一个令牌，
+   免得同一个数在文件里出现四遍、以后调不齐。 */
+:root {
+  --line-hi: #33295C;
+}
+
+/* B-01：body 的竖向渐变与 ::before 网格**已全部删除**，交给 tokens.css。
+   这里只留字体与平滑 —— 少这一条，第二个人就会再写一份背景。 */
+body {
+  margin: 0;
+  font-family: var(--ff-ui);
+  color: var(--ink-1);
+  font-size: var(--fs-14);
+  line-height: var(--lh-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 练习页的环境光整体压暗一档：那一页要连续盯几个小时，
+   背景不许和正文抢注意力。变量改在 body 上，tokens 的 body 背景会跟着重算。 */
+body:has(.pc) {
+  --aura-1: rgba(47, 230, 255, 0.11);
+  --aura-2: rgba(255, 77, 126, 0.05);
+  --aura-3: rgba(47, 230, 255, 0.08);
+}
+
+#app,
+.host {
+  position: relative;
+  z-index: var(--z-content);
+  height: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* 焦点环由 tokens.css 统一给（outline + --focus-gap，含 .cdel / .key 两处例外）。
+   这里只补它管不到的三处，见下面「焦点环的补充」。 */
+
+/* ── 焦点环的补充（tokens.css 管不到的三处）─────────────────────
+   ① 主按钮自己带 34px 光晕，青环落进光里就分不清「焦点在这」和「它本来在发光」
+      → 聚焦时把自身光收成 sm（这不是审美：报名是不可逆扣款，最需要键盘确认）
+   ② 输入层的某些装饰不能靠 outline 表达
+      → 改由纸张外框承担 */
+.btn.primary:focus-visible {
+  box-shadow: var(--sh-xs);
+}
+
+/* 只给读屏器的标题：右栏需要一级标题才成「有名字的 landmark 区域」，
+   但屏幕上不该多出一行字 —— 它只做 aria-labelledby 的归属。 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ───────────── 通用控件 ───────────── */
+
+.ghost {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 var(--sp-2);
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-2);
+  color: var(--ink-3);
+  font-size: var(--fs-13);
+  transition: color var(--t-1) var(--ease-out), background var(--t-1) var(--ease-out);
+}
+
+.ghost:hover {
+  background: var(--bg-raised);
+  color: var(--ink-1);
+}
+
+/* 次级按钮：只有描边。hover 才拿到面。 */
+.btn {
+  padding: 6px 14px;
+  border: 1px solid var(--line-ctl);
+  border-radius: var(--r-3);
+  color: var(--ink-2);
+  font-size: var(--fs-13);
+  white-space: nowrap;
+  transition: border-color var(--t-1) var(--ease-out), color var(--t-1) var(--ease-out),
+    background var(--t-1) var(--ease-out);
+}
+
+.btn:hover {
+  border-color: var(--line-3);
+  color: var(--ink-1);
+  background: var(--bg-raised);
+}
+
+/* 主行动：全屏唯一的实心块，也是唯一「自己会发光」的按钮（L3）。
+   实心块用强调色，不用反色 —— 它要读作「行动」，不是「选中的一行」。 */
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg-void);
+  font-weight: var(--fw-m);
+  box-shadow: var(--sh-lg);
+  transition: background var(--t-1) var(--ease-out), box-shadow var(--t-2) var(--ease-out);
+}
+
+.btn.primary:hover {
+  background: var(--accent-hi);
+  border-color: var(--accent-hi);
+  box-shadow: 0 0 0 1px var(--accent-hi), 0 0 34px 0 var(--accent-c);
+}
+
+/* ── 禁用态（§7.2）──────────────────────────────────────────────
+   四件事叠加：去发光 + 描边换灰（--line-2，WCAG 1.4.11 对不可操作控件豁免）+
+   字降一档 + 旁边一行可见原因。**形状与尺寸一点都不变** —— 变了整块面板会跳。
+   绝不用 opacity 一把梭：它是乘性的（同一按钮在三种面上三个对比度）、
+   会把 11–13px 中文压到 2:1 以下、会把发光一起乘掉，而且不提供任何非颜色信号。 */
+.btn[aria-disabled='true'],
+.btn[aria-disabled='true']:hover {
+  background: transparent;
+  border-color: var(--line-2);
+  color: var(--ink-3);
+  box-shadow: none;
+  cursor: not-allowed;
+  /* 禁用与恢复都是「状态换色」，不是位移：只过渡颜色，80ms（--t-0）内看得见。
+     浮层里那 400ms 静默期进出的就是这一条 —— 没有它，按钮会硬切一下。 */
+  transition: background-color var(--t-0) linear, border-color var(--t-0) linear,
+    color var(--t-0) linear;
+}
+
+/* 主按钮退化时连填色一起去掉 —— 但字号、内边距、位置全部不变 */
+.btn.primary[aria-disabled='true'],
+.btn.primary[aria-disabled='true']:hover {
+  background: transparent;
+  border-color: var(--line-2);
+  color: var(--ink-3);
+  font-weight: var(--fw-r);
+  box-shadow: none;
+}
+
+/* 禁用按钮旁边那行原因。和按钮同源的数字（还差多少铜）由 JS 算好，这里只管版式 */
+/* ── 忙碌态（§7.2）──────────────────────────────────────────────
+   受理确认：按下到「已受理」必须 ≤80ms（--t-0）。所以这一态**不加过渡**，
+   出现即完成。条纹方向 reverse —— 它是「在等」，不是「在走」。 */
+.btn[aria-busy='true'] {
+  position: relative;
+  background-color: var(--bg-raised);
+  background-image: repeating-linear-gradient(115deg,
+    rgba(47, 230, 255, 0.20) 0 1px, transparent 1px 6px);
+  border-color: var(--accent-b);
+  color: var(--ink-2);
+  box-shadow: none;
+  cursor: progress;
+  /* 受理确认必须在 --t-0(80ms) 内看得见 —— 所以过渡只给 80ms，
+     而且只过渡颜色：位置/尺寸/字重一概不动（动了就是「界面在跳」）。 */
+  transition: background-color var(--t-0) linear, border-color var(--t-0) linear;
+  animation: busy-flow var(--t-busy) linear infinite reverse;
+}
+
+/* 正好走一个条纹周期（6px），接缝看不出来 */
+@keyframes busy-flow {
+  to { transform: translateX(6px); }
+}
+
+/* 五区色：只允许出现在字形 / 键帽字母 / 码位格（spec 3.6）。
+   这里只提供「给文字上区色」的类，不参与任何填充与发光。 */
+.zone-1 { color: var(--zone-1); }
+.zone-2 { color: var(--zone-2); }
+.zone-3 { color: var(--zone-3); }
+.zone-4 { color: var(--zone-4); }
+.zone-5 { color: var(--zone-5); }
+
+/* ───────────── 顶栏 ─────────────
+   一条 56px 的状态线。右边永远是「v · Lv▾ · 累计 · 进度」，
+   左半边是页面身份（主页品牌 / 练习页 ← + 卡名）。
+   Lv 是触发器（点开 100 级表），其余是纯读数；
+   累计字数是「这台机器上还有没有进度」的直接证据。 */
+
+.topbar {
+  flex: 0 0 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: var(--h-topbar);
+  padding: 0 var(--sp-4);
+  border-bottom: 1px solid var(--line-1);
+  background: var(--bg-hud);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+}
+
+/* 顶栏底缘：**粉 → 青** 的霓虹边。全站唯一的「装饰渐变」，
+   也是整套视觉里最容易被记住的那一笔 —— 只在 1px 上做，不铺面积。 */
+.topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    transparent 0%, var(--accent-2) 14%, var(--accent) 52%, rgba(47, 230, 255, 0.25) 78%, transparent 96%);
+  box-shadow: 0 6px 20px -8px var(--accent-c);
+}
+
+/* E-02：练习页顶栏去掉三处发光，只留 1px 线。
+   那一页的注意力只应该给「当前字」和「速度」。 */
+.pc .topbar::after {
+  box-shadow: none;
+}
+
+/* 顶栏那颗沿底缘跑的光点（`.topbar::before`）在 v2.0 删除。
+   浅底上它是全页唯一的循环动画，除了分心什么都不做 ——
+   纸面主题的第一条纪律就是「静止」：你自己会动的东西不该出现在余光里。 */
+
+/* 品牌：一枚「猫瞳」+ 四个汉字。瞳孔是全站唯一一处「生命迹象」，
+   每 7 秒眨一次。不画猫 —— 只给一双眼睛。零 DOM 改动，全靠伪元素。 */
+.topbar .brand {
+  flex: 0 1 auto;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  font-size: var(--fs-15);
+  font-weight: var(--fw-b);
+  letter-spacing: 0.06em;
+  color: var(--ink-1);
+  white-space: nowrap;
+}
+
+/* 品牌标：一枚 24px 的猫头 + 四个汉字。
+   图是 48px 的位图按 24px 显示（2x），像素画缩一半才不会糊成一团。
+   练习页那个位置是卡名（.ptitle），不画标。 */
+.topbar .brand.brandhome {
+  padding-left: 32px;
+  font-size: var(--fs-16);
+  font-weight: var(--fw-sb);
+}
+
+.topbar .brandlogo {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  margin-top: -12px;
+  display: block;
+  /* 猫头是深色，靠自身白描边和底分开；往下压一点点阴影，让它坐进顶栏而不是浮在上面 */
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
+  transition: filter var(--t-1) var(--ease-out), transform var(--t-1) var(--ease-out);
+}
+
+/* ── 品牌 = 「回到首页」入口（仅链接态）────────────────────────────
+   静止态和不可点时一模一样：只补浏览器给链接的默认外观（下划线、指针），
+   不动字号字重内边距。多一个字宽都会把版本号往右推一格。
+   `color: inherit` 让链接不吃 UA 的蓝色，落到 .topbar 继承来的 --ink-1。 */
+.topbar a.brand.brandhome {
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* hover：猫头亮一点、抬起半像素。不做缩放 —— 位图在非整数倍下会糊。 */
+.topbar a.brand.brandhome:hover .brandlogo {
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 7px var(--accent-c)) brightness(1.08);
+  transform: translateY(-0.5px);
+}
+
+/* 按下：回落到静止态偏暗一点，不移位。 */
+.topbar a.brand.brandhome:active .brandlogo {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) brightness(0.95);
+  transform: none;
+}
+
+/* 焦点环贴整块品牌：它没有背景块，环就是唯一的可见边界。 */
+.topbar a.brand.brandhome:focus-visible {
+  outline: var(--focus-ring) solid var(--accent);
+  outline-offset: var(--focus-gap);
+  border-radius: var(--r-1);
+}
+
+/* 顶栏只有读数，没有「像输入框的链接」。
+   它腾出来的位置给了 Lv 与段位两个可点读数。 */
+.topbar .ptitle {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--fs-15);
+  font-weight: var(--fw-sb);
+  letter-spacing: var(--ls-cjk);
+  color: var(--ink-1);
+}
+
+.userdata {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* 顶栏现在是「品牌 + 版本 + Lv + 段位 + 累计字数 + 货币」，数据自己贴右 */
+  margin-left: auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* 1px 竖分隔：把「可点的两个」和「只读的两个」分开一段。
+   56px 高的顶栏里，1px 竖线比 12px 空格更清楚，也省横向空间。 */
+.userdata .vsep {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 12px;
+  background: var(--line-2);
+}
+
+/* ── 两个可点读数（Lv / 段位）────────────────────────────────────
+   可点性靠**形状 + hover + 状态**三重表达，不只靠颜色：
+   `▾` 在暗底上是最容易被读成「有东西展开」的符号，展开时它翻 180°，
+   再点一次就收起。padding:0 —— 触发器本身就是那两个胶囊，不要多一层框。 */
+.trig {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* hover 时把胶囊的描边提亮一档 —— 这是第二重「这里能点」的证据 */
+.trig:hover .lv,
+.trig[aria-expanded='true'] .lv {
+  border-color: var(--accent);
+}
+
+/* 版本号：不发光、不抢视线，只回答「你现在跑的是哪一版」 */
+.topbar .vtag {
+  flex: 0 0 auto;
+  margin-left: 10px;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+}
+
+/* Lv：顶栏里唯一被点亮的东西 —— 它是「有没有存档」的唯一判据。 */
+.topbar .lv {
+  flex: 0 0 auto;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-13);
+  font-weight: var(--fw-m);
+  color: var(--accent);
+  padding: 4px 10px;
+  border: 1px solid var(--accent-b);
+  border-radius: var(--r-3);
+  background: var(--accent-a);
+  box-shadow: var(--sh-xs);
+  white-space: nowrap;
+}
+
+/* 本级经验：一条 5px 的条 + 下面一行 `2,176 / 4,582`。
+   两行加起来 22px，正好塞进 56px 的顶栏，也不抢 Lv 的位置。
+
+   Lv 是台阶，经验是连续的 —— 只写 `Lv.3` 时，练完一整个 500 字表只要没升级，
+   顶栏就一动不动。条子回答「大概到哪了」，下面那行数字回答「还差多少」：
+   数字用等宽 + tabular-nums，每次 +1 只在末位跳，整行不会抖。 */
+.topbar .lvprog {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 84px;
+}
+
+.topbar .lvnum {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.topbar .lvbar {
+  flex: 0 0 auto;
+  display: block;
+  width: 100%;
+  height: 5px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.10);
+  overflow: hidden;
+}
+
+.topbar .lvbar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width var(--t-3) var(--ease-out);
+}
+
+/* 窄屏先把经验条收掉：它是「趋势」，Lv 与累计字数是「读数」，取舍很清楚 */
+@media (max-width: 900px) {
+  .topbar .lvprog {
+    display: none;
+  }
+}
+
+/* 顶栏要压在卡片之上（下拉菜单不能被卡片盖住），但必须低于浮层（.ov/.ovex 是 40），
+   否则练习结算框会被顶栏压一条。 */
+.topbar {
+  z-index: var(--z-sticky);
+}
+
+/* 练习页顶栏的 Lv 也在发光 —— E-02 只收「段位徽章 / 底缘溢出光 / 经验条打印头」，
+   Lv 保留（它是存档判据），但这里不额外加环，靠 .topbar .lv 那一套。 */
+
+.userdata .stat {
+  font-size: var(--fs-12);
+  color: var(--ink-3);
+}
+
+/* 累计两个读数：`累计 12.4 小时 · 38,204 字`。
+   时长在前 —— 它才是「花了多少功夫」的原文，字数是它的结果。
+   一个 flex 项里走行内流，`·` 两侧各 4px。 */
+.userdata .accum {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.userdata .alabel {
+  font-style: normal;
+  font-size: var(--fs-11);
+  color: var(--ink-3);
+  margin-right: 4px;
+}
+
+.userdata .dsep {
+  margin: 0 4px;
+  color: var(--ink-4);
+}
+
+.userdata .stat .num {
+  font-family: var(--ff-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-r);
+  font-size: var(--fs-13);
+  color: var(--ink-1);
+}
+
+/* 时长比字数低一档：它是背景信息，字数才是「练了多少」的主读数 */
+.userdata .stat.dur .num {
+  font-size: var(--fs-12);
+  color: var(--ink-2);
+}
+
+.userdata .stat i {
+  font-style: normal;
+  font-size: var(--fs-11);
+  color: var(--ink-3);
+  margin-left: 2px;
+}
+
+/* 「进度」：顶栏最右那颗方按钮。它开的是**模态**存档弹窗（要压暗背景、trap 焦点），
+   和三个非模态触发器不是一类东西，所以形状也不一样 —— 圆角方块，不是胶囊。 */
+.topbar .ttool {
+  flex: 0 0 auto;
+  height: 26px;
+  margin-left: 2px;
+  padding: 0 12px;
+  font-family: inherit;
+  font-size: var(--fs-12);
+  letter-spacing: var(--ls-cjk);
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid var(--line-ctl);
+  border-radius: var(--r-2);
+  cursor: pointer;
+  transition: color var(--t-1) var(--ease-out), border-color var(--t-1) var(--ease-out),
+    background var(--t-1) var(--ease-out);
+}
+
+.topbar .ttool:hover {
+  color: var(--ink-1);
+  border-color: var(--accent);
+  background: var(--accent-a);
+}
+
+/* ───────────── 主页骨架（C-01 三件套，一个字符都不许动） ─────────────
+   只有两个子区各自滚，.hm 自己 overflow:hidden。
+   所以 .hmbody 必须 min-height:0 —— flex 子项默认 min-height:auto 会把容器撑高，
+   两个 overflow-y:auto 就都滚不起来了。 */
+
+.hm {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.hmbody {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.hmleft {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0; /* 让卡片网格能在窄栏里收缩，而不是把右栏挤出去 */
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 0 var(--sp-7) var(--sp-8);
+}
+
+/* 光池：一盏从舱顶打下来的冷光，落在第一排卡上。
+   卡片是半透明的，光会穿透到卡面 —— 左上角的卡比下面的卡亮一点，页面才有纵深。
+   它跟着内容一起滚（不是 fixed），因为光源在舱顶，不在视口。 */
+.hmleft::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 420px;
+  pointer-events: none;
+  background: radial-gradient(1200px 300px at 26% -6%, rgba(47, 230, 255, 0.15), transparent 72%);
+}
+
+/* 页宽上限放在内层：放 .hmleft 上的话会把右栏一起推成「居中偏左」。
+   flex 列 + min-height:100% 是为了页脚 —— 内容比视口短时它压到底（B-28）。 */
+.hmwrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  max-width: var(--w-page);
+  margin: 0 auto;
+}
+
+/* 主页是单列布局：宽度全部给卡片网格。 */
+
+/* 细滚动条：两条滚动区都不该出现一条 15px 的系统粗条。
+   只用 ::-webkit- 前缀、不写 scrollbar-width —— 一旦写了（非 auto），
+   Chromium 会忽略下面这几条伪元素规则，颜色就丢了。 */
+.hmleft::-webkit-scrollbar {
+  width: 8px;
+}
+
+.hmleft::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hmleft::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: var(--r-2);
+}
+
+.hmleft:hover::-webkit-scrollbar-thumb {
+  background: var(--line-3);
+}
+
+/* ───────────── 三个栏目 + 组标题（v3 §2.1） ─────────────
+   三组**完全同级**：16px / 600 / --ls-cjk / --ink-1，字号字重一模一样。
+   层级靠「三组平行」表达，不靠把某一组做大；组与组之间只有两件事：
+   32px 留白 + 标题下那条 1px 渐隐光带。不加分隔线、不加背景块、不加左侧竖条。
+
+   标题右侧只留**一个真数字**：本组累计字数（组内各卡之和，不能手写）。
+   它回答的是卡片回答不了的问题 —— 我的功夫花在哪一组。 */
+
+.grp + .grp {
+  margin-top: var(--sp-7);
+}
+
+.ghead {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-4);
+  padding-bottom: 10px;
+  color: var(--ink-1);
+}
+
+/* 组名：17/700 + 0.06em 字距。
+   中文字距放宽是「海报感」的来源；16/600 是「正文标题」，不够张扬。 */
+.ghead .gtitle {
+  font-size: 17px;
+  font-weight: var(--fw-b);
+  letter-spacing: 0.06em;
+}
+
+/* 发光方块用伪元素画：三组标题 × 1 颗 = 全页 3 处 L1 光，
+   与 v1 持平；不为了一个 6×6 的方块在模板里多写一个 `<i>`。 */
+.ghead::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--accent);
+  box-shadow: var(--sh-xs);
+}
+
+.ghead::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  /* 组标题下面这条线也吃渐变：粉 → 青 → 淡出。
+     三组各一条，正好把「霓虹」这件事重复三次，形成节奏（不是装饰堆叠）。 */
+  background: linear-gradient(90deg,
+    var(--accent-2-b) 0%, var(--accent-b) 18%, var(--line-1) 44%, var(--line-1) 70%, transparent 96%);
+}
+
+.grp:first-child .ghead {
+  margin-top: var(--sp-5);
+}
+
+.gsum {
+  margin-left: auto;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-r);
+  letter-spacing: var(--ls-plate);
+  /* 11–12px 的「要读的字」用 ink-2：小字 + 低对比 = 眯眼 = 眼疲劳。 */
+  color: var(--ink-2);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ───────────── 卡片网格 ─────────────
+   **4 列 × 271，卡高 158。** 一块接近正方形的砖 ——
+   顶部一个大字当身份，下面两行小字，底部一条进度线。
+
+   比例是刻意的：矮而宽的卡里塞两行字，怎么排都像表格行；竖版才有「一张卡」的体积。
+
+   4 列是算出来的：1120 = 271 × 4 + 12 × 3，两组都是整数行（单字 6+1、词组 3+1）。
+   不用 auto-fill：Chromium 按**上限**计数，`minmax(240px,280px)` 会算出
+   3 列 + 右边 256px 空场，三个组各留一块不一样的尾巴。 */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 158px;
+  padding: 18px 18px 16px;
+  background-color: var(--bg-card-a);
+  /* 「接光」只发生在卡片最上面 12px 的边条里 —— 那里是内边距，没有字。
+     再往下立刻退到接近透明：把光铺满整张卡会让 11–12px 的信息掉到 4.0:1。 */
+  background-image: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.09) 0, rgba(255, 255, 255, 0.04) 12px,
+    transparent 52px, rgba(120, 90, 255, 0.08) 100%);
+  border: 1px solid var(--line-1);
+  border-top-color: var(--line-hi); /* 受光的那一条边，只亮一档 */
+  border-radius: var(--r-4);
+  box-shadow: var(--edge-hi);
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  overflow: hidden;
+  /* 只有描边、背景、阴影、位移四项 —— 卡片是鼠标靶，允许它回应手指 */
+  transition: border-color var(--t-1) var(--ease-out),
+    background-color var(--t-2) var(--ease-out),
+    box-shadow var(--t-2) var(--ease-out),
+    transform var(--t-2) var(--ease-out);
+}
+
+/* 折叠起来的卡：`hidden` 的 UA 规则是 display:none，但它输给作者声明的
+   display:flex —— 不显式认一次，折叠就是把卡「藏」了个空气。 */
+.card[hidden] {
+  display: none;
+}
+
+/* hover：抬 2px、描边转青、外发光（L2，瞬时态）。
+   不用 scale —— 放大会让卡上的字在动，读起来不安定。 */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(135deg, var(--accent-2-b), transparent 40%, transparent 60%, var(--accent-b));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  transition: opacity var(--t-2) var(--ease-out);
+}
+
+/* hover：抬 2px、渐变霓虹边浮出来、底色抬一档。
+   不用 scale —— 放大会让卡上的字在动，读起来不安定。 */
+.card:hover {
+  transform: translateY(-2px);
+  background-color: var(--bg-raised);
+  box-shadow: var(--sh-md), var(--edge-hi);
+}
+
+.card:hover::after {
+  opacity: 1;
+}
+
+.card:hover .cbig {
+  color: var(--accent);
+}
+
+/* 卡顶那个大字 = 这张卡的身份：`1–500` / `二字词` / `字根`。
+   30px / 700 / --ink-1，全卡唯一的大字。
+   **不上色**：12 张卡 × 一种彩色大字 = 12 处常驻强调，而 tokens 规定
+   一屏常驻发光不超过 3 处。层级交给字号与字重，颜色留给进度条。 */
+.cbig {
+  /* 数字走 display 栈（Bahnschrift 的窄体数字比系统无衬线更「锐」）；
+     中文（二字词 / 字根）在这套字体里没有字形，会自动回退到 --ff-ui，
+     而它们从不同时出现在一行里，所以不会出现中西混排打架。 */
+  font-family: var(--ff-display);
+  font-size: 30px;
+  font-weight: var(--fw-b);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  /* 纯白。卡片大字是「读数」，读数上色只会让它像广告；
+     颜色留给进度条和那条霓虹边。 */
+  color: var(--ink-1);
+  transition: color var(--t-1) var(--ease-out);
+}
+
+/* 副标题：这张卡装了多少东西（`500 个常用字`）。12px / --ink-3。 */
+.cmeta {
+  margin-top: 8px;
+  font-size: var(--fs-12);
+  line-height: 18px;
+  /* 11–12px 的「要读的字」用 ink-2：小字 + 低对比 = 眯眼 = 眼疲劳。 */
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 自定义卡的卡名（用户自己起的，可能很长）：13px / --ink-2，单行省略。 */
+.ctitle {
+  margin-top: 8px;
+  font-size: var(--fs-13);
+  line-height: 18px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 主行读数：**已练题数 / 总题数**。mono 12px，`margin-top:auto` 压到下半区 ——
+   同一组里所有卡的读数因此落在同一条水平线上，一眼能比。 */
+.cstats {
+  margin-top: auto;
+  padding-top: 10px;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-13);
+  font-weight: var(--fw-sb);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.cstats b {
+  font-size: var(--fs-14);
+  font-weight: var(--fw-b);
+  color: var(--ink-1);
+}
+
+/* 次行：累计字数（含重复）。11px / --ink-3 —— 它的量级会一直涨、没有上限，
+   不该抢上面那行题数的位置。 */
+.cdone {
+  margin-top: 4px;
+  font-size: var(--fs-11);
+  line-height: 15px;
+  /* 11–12px 的「要读的字」用 ink-2：小字 + 低对比 = 眯眼 = 眼疲劳。 */
+  color: var(--ink-2);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cdone b {
+  font-family: var(--ff-mono);
+  font-weight: var(--fw-r);
+  color: var(--ink-3);
+}
+
+/* 卡内进度条：4px 圆角条，进文档流（不是贴底的绝对定位）。
+   暗舱时期它是一条贴底的 3px 光带，靠「打印头」的辉光收尾；浅底上那套失效 ——
+   贴底线在白卡上读作「一条没对齐的下边框」，所以改成卡内的一条药丸，
+   离底 10px、左右各留 18px，和文字的左右边界对齐。 */
+.cline {
+  display: block;
+  margin-top: 10px;
+  height: 4px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.10);
+  overflow: hidden;
+}
+
+.cline i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  /* 青 → 紫：这是全站唯一一条彩色渐变（除了纸的描边）。
+     紫色不是「错误」（错误是洋红 #FF4D7E），它是夜空的地平线。 */
+  background: linear-gradient(90deg, var(--accent) 0%, #7B5BFF 100%);
+}
+
+/* ───────────── 自定义卡 + 新建卡 ─────────────
+   自定义卡：大字写「自定」，下面一行是用户起的名字，**不画进度条**。
+   分母是用户自己粘的那一段、老存档里也没有它的 queue 快照 ——
+   没有可信分母时不画条（画一条 100% 等于谎称「打完了」）。
+
+   结构上外层是 `<div class="card ccard">`，里面一个覆盖整卡的
+   `<a class="cover">` 负责跳转、一个 `<button class="cdel">` 负责删除：
+   **HTML 不允许 `a` 套 `button`**，所以删除键必须是链接的兄弟节点，
+   靠 z-index 压在覆盖层上面。 */
+.ccard .cbig {
+  color: var(--ink-2);
+}
+
+.cover {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+/* 覆盖层自己撑满整卡，焦点环要收进卡内（卡是 overflow:hidden，环推出去会被裁掉） */
+.cover:focus-visible {
+  outline-offset: -3px;
+}
+
+/* 自定义卡的删除键（hover / 键盘焦点才出现）。「删」是危险动作 → 洋红。 */
+.cdel {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-1);
+  font-size: 11px;
+  color: var(--ink-4);
+  opacity: 0;
+  transition: opacity var(--t-1) var(--ease-out), background var(--t-1) var(--ease-out),
+    color var(--t-1) var(--ease-out);
+}
+
+.card.ccard:hover .cdel,
+.card.ccard:focus-within .cdel {
+  opacity: 1;
+}
+
+.cdel:hover {
+  background: var(--danger-a);
+  color: var(--danger);
+}
+
+/* ── 新建卡（虚线）与上限态（实线）─────────────────────────────
+   状态靠**形状**区分，不靠颜色：虚线 = 还能加；实线 = 到顶了。
+   这个信号与颜色无关，色盲用户同样成立，也没有新增任何一种颜色。 */
+.card.cadd {
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-style: dashed;
+  border-color: var(--line-2);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+}
+
+.card.cadd:hover {
+  border-color: var(--accent-b);
+  background: var(--accent-a);
+  color: var(--accent);
+  box-shadow: var(--sh-md), inset 0 0 30px -14px var(--accent-c);
+  transform: none;
+}
+
+.card.cadd .cbig {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1;
+  color: inherit;
+}
+
+.card.cadd .ctitle {
+  margin: 0;
+  font-size: var(--fs-14);
+  color: inherit;
+}
+
+.caddnote {
+  max-width: 100%;
+  font-size: var(--fs-11);
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+
+.card.cadd:hover .caddnote {
+  color: var(--ink-2);
+}
+
+/* 到顶：实线 + 描边降一档 + 字保持 --ink-3 + 一行可见原因（`aria-disabled` 由 JS 拦）。
+   不用 opacity —— 它是乘性的，会把 11–13px 的中文压到 2:1 以下，也不提供任何非颜色信号。 */
+.card.cfull {
+  border-style: solid;
+  border-color: var(--line-2);
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+
+.card.cfull:hover {
+  border-color: var(--line-2);
+  background: transparent;
+  color: var(--ink-3);
+  box-shadow: none;
+  transform: none;
+}
+
+.card.cfull:hover .caddnote {
+  color: var(--ink-3);
+}
+
+/* ───────────── 页脚（B-28） ─────────────
+   margin-top:auto —— 内容比视口短时页脚压到底，
+   下面那片空场就不再是「没写完」，而是「甲板到此为止」。 */
+
+.foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: auto;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line-1);
+  font-size: var(--fs-12);
+  letter-spacing: 0.02em;
+  color: var(--ink-4);
+  text-align: center;
+}
+
+/* 两段之间的分隔点：比整句用「·」串起来更像「条目」，也更短 */
+.foot .footdot {
+  color: var(--line-3);
+}
+
+/* 存档不再是下拉，改成「进度」对话框（.savedlg）。 */
+
+/* 顶栏只有 Lv（等级表）、累计字数、进度（存档）三样读数。 */
+
+
+/* ───────────── 练习页骨架（B-16） ─────────────
+   桌面整屏不滚，只有纸张内部滚 —— 数据条和拆解条必须常驻（C-04）。 */
+
+.pc {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-4) var(--sp-3);
+  /* **必须能滚**：拆解条展开后内容比舞台高（900 下刚好，768 下必然超出）。
+     没有 overflow 时，超出部分会直接画到底栏下面 —— 看到的就是
+     「拆分图解的底部被底栏盖住了」。overflow-y:auto 让底栏永远压不到内容。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 纸张：全页唯一需要被逐字阅读的东西，所以也是唯一一块大面积「亮面」。 */
+.paper {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 30px 40px 34px;
+  background-color: var(--bg-paper);
+  /* 纸面不再自带聚光。原来那盏 620×460 @50%46% 的冷光圆心就在字上，
+     等于给注视点又加了一个「局部更亮」的区域 —— 和字后那圈光晕叠加，
+     是「头晕眼花」的第二个来源。
+     现在只在纸面的**上边缘之外**留一点紫光（圆心在 -10%），
+     纸内大面积保持均匀：眼睛在纸面上移动时亮度不变，就不用反复适应。 */
+  background-image:
+    radial-gradient(1100px 760px at 50% -14%, rgba(120, 77, 255, 0.10), transparent 70%);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-4);
+  box-shadow: var(--edge-hi), 0 0 70px -40px var(--accent-c);
+}
+
+/* 纸的描边：1px 中性实色（`--stroke`）。
+   它现在是「纸浮在页底上」的**唯一**可感知线索（亮度分离只有 1.078:1），
+   所以有下限：alpha 不得低于 .30，禁 dashed、禁 0.5px、禁 hover 过渡。
+   纸边与页底的亮度分离已抬到 1.078，够撑住这条描边。 */
+
+/* 单字 / 词组 / 字根：纸张**撑满**剩余高度，内容在纸面里居中。
+   纸若只占需要的高度，输入框与常驻贴底的拆解条之间会空出一大块，
+   看起来像「下半页没写完」。一张写着一个字的纸，本来就该有留白。
+   `min-height:0` 是给 768 这类矮窗口留的退路（纸可以缩，内容不会被挤没）。 */
+.pc.mode-item .paper {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  /* **必须 column**：字根卡的纸里有两个孩子（字形 + 屏幕键盘），
+     row 会把它们并排放成「左图右键」，那是上一次改动的真实事故。 */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 22px 32px 26px;
+}
+
+.paper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.paper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.paper::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: var(--r-2);
+}
+
+/* 练习时长（字根 / 单字 / 词组）。
+   细状态线曾经做到 11px，实际读起来太吃力，现在整体抬大一档。
+   它是一条**状态条**：剩余时间 22px mono，时长按钮 12px，进度条 5px 高。
+   倒计时是这一页唯一会「变」的读数，它该比标签大两档，而不是和小字一样大。 */
+.session {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  width: 100%;
+  max-width: 960px;
+  min-height: 44px;
+  margin: 0 auto;
+  padding: 0 2px;
+  font-size: var(--fs-13);
+  color: var(--ink-3);
+}
+
+.session .slabel {
+  font-size: var(--fs-13);
+  letter-spacing: var(--ls-cjk);
+  white-space: nowrap;
+}
+
+/* 卡名：整行最左，用一条 1px 竖线和「练习时长」分开。
+   顶栏腾出来给品牌之后，卡名就住在这里 —— 它回答「我在练哪张卡」，
+   和「练多久」是同一类信息（这一屏的上下文），不属于全局顶栏。 */
+.session .cname-sm {
+  max-width: 220px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding-right: var(--sp-4);
+  border-right: 1px solid var(--line-1);
+  font-size: var(--fs-13);
+  font-weight: var(--fw-sb);
+  letter-spacing: var(--ls-cjk);
+  color: var(--ink-1);
+}
+
+/* 返回键：一颗真的按钮，不是顶栏里的一个箭头。
+   返回键放在顶栏会把品牌挤掉，所以它留在练习页自己的标题条里：
+   标志要在任何界面都在，返回键就得离开顶栏。放在倒计时右边，看得见、点得到。 */
+.session .backbtn {
+  flex: 0 0 auto;
+  height: 30px;
+  margin-left: var(--sp-2);
+  padding: 0 12px;
+  font-family: inherit;
+  font-size: var(--fs-12);
+  letter-spacing: var(--ls-cjk);
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid var(--line-ctl);
+  border-radius: var(--r-full);
+  cursor: pointer;
+  transition: color var(--t-1) var(--ease-out), border-color var(--t-1) var(--ease-out),
+    background var(--t-1) var(--ease-out);
+}
+
+.session .backbtn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-a);
+}
+
+.session .sopts {
+  display: flex;
+  gap: 6px;
+}
+
+.session .sopt {
+  font-size: var(--fs-12);
+  color: var(--ink-3);
+  padding: 5px 12px;
+  border: 1px solid var(--line-ctl);
+  border-radius: var(--r-full);
+  transition: color var(--t-1) var(--ease-out), border-color var(--t-1) var(--ease-out),
+    background var(--t-1) var(--ease-out), box-shadow var(--t-2) var(--ease-out);
+}
+
+.session .sopt:hover {
+  color: var(--ink-1);
+  border-color: var(--line-3);
+}
+
+/**
+ * 「下一轮生效」。
+ *
+ * 只有描边 + 一个 5px 的角点，**不加文字后缀**：按钮宽 48px 上下，
+ * 塞「(下一轮)」会撑破换行。完整说法在 title / aria-label 里。
+ * 它与 `.on`（当前档）同时存在是合法的：当前档亮着，另一档挂着角点。
+ */
+.session .sopt.pending {
+  position: relative;
+  color: var(--ink-2);
+  border-color: var(--accent-b);
+  background: var(--accent-a);
+}
+
+.session .sopt.pending::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: var(--r-full);
+  background: var(--accent);
+}
+
+/* 选中态：描边直接用强调色。
+   浅底上不能再靠「亮一档」表达选中 —— #91846F 的控件描边压在
+   accent-a 的淡底上只有 2.8:1，审计当场拦下。 */
+.session .sopt.on {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-a);
+}
+
+.session .sremain {
+  margin-left: auto;
+  font-family: var(--ff-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: var(--fw-sb);
+  line-height: 1;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+/* 剩余时间告急：只换色，不加图标、不闪。 */
+.session .sremain.low {
+  color: var(--danger);
+}
+
+.session .sbar {
+  flex: 0 0 160px;
+  height: 5px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.session .sbar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: var(--accent);
+  box-shadow: 0 0 9px -1px var(--accent-c);
+  transition: width var(--t-3) linear;
+}
+
+
+
+
+
+
+
+
+
+
+/* ④ 待打：--ink-read，全站最亮。它亮是因为它是你要读的东西，不是因为它重要。 */
+
+/* 单题 */
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.bigwrap {
+  display: grid;
+  place-items: center;
+  min-height: 168px;
+}
+
+/* 超大字形。光晕用 filter: drop-shadow —— 画在字形背后的一份模糊副本，
+   笔画本身不参与模糊（text-shadow 会盖到笔画上，等于糊字）。 */
+.bigchar {
+  font-size: var(--fs-96);
+  /* 700 → 600：96px 上这一档字重差掉的是约 12% 的亮面（笔画的「肉」），
+     可辨识度几乎不变，但眩光总量实打实地少了。
+     注意：**只对 ≥56px 的大字这样做**，28px 以下的字降重会直接糊。 */
+  font-weight: var(--fw-sb);
+  line-height: 1;
+  color: var(--ink-read);
+  letter-spacing: 0.04em;
+  /* **不再给字加青色光晕**。原来那圈 28px 的 rgba(47,230,255,.30) 有两宗罪：
+     ① 它正好落在注视点上 —— 眼睛盯字的时候，余光里一直有一团亮雾；
+     ② 青在 190°，字是近白的暖灰，两者之间是一条 180° 的色相跳变，
+        深度色差会让笔画的边缘「抖」（chromostereopsis），看久了就头晕。
+     现在只留一层**同色系**的极小晕（紫、10px、α.12）：它只在笔画边缘
+     兜一点点形体，读不出来是一团光。 */
+  filter: drop-shadow(0 0 10px rgba(140, 110, 255, 0.12));
+}
+
+/* 词组的字多，逐级降字号；三档都是量过的，不改口径 */
+.bigchar.w2 { font-size: 84px; }
+.bigchar.w3 { font-size: 58px; letter-spacing: 0.06em; }
+.bigchar.w4 { font-size: 44px; letter-spacing: 0.08em; }
+
+.rglyph {
+  width: 112px;
+  height: 112px;
+  /* 和单字卡同一个读数色：字根是「要认的对象」，不是「五区里的第几区」——
+     一整晚盯着红/黄/绿/紫的笔画，眼睛先累。区色只出现在键盘和键帽上。 */
+  color: var(--ink-read);
+}
+
+.rglyph path {
+  fill: currentColor;
+}
+
+.rglyph-text {
+  font-size: var(--fs-96);
+  line-height: 1;
+  color: var(--ink-read);
+}
+
+/* 编码串：生字或打错时才出现，压在字的正下方。
+   **这是「第一次见到这个字」时唯一的线索**，所以它不可能是 15px 的灰字：
+   18px / 700 / 强调青，字距再宽一档，一眼就能读成「g ggl ggll」。
+   15px 的灰字读起来太轻，生字第一次见到时要一眼看清。 */
+.codes {
+  min-height: 28px;
+  margin-top: 2px;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-18);
+  font-weight: var(--fw-b);
+  letter-spacing: var(--ls-code);
+  /* 不再用满饱和的 #2FE6FF：它就顶在字的正下方，18px/700 的纯青
+     会和上面那团亮字连成一片「亮点区」。降到 #7FCBD6（对纸 8.6:1），
+     仍然一眼能读，但不会和主角抢亮度。 */
+  color: #70C2CD;
+  opacity: 0;
+  transition: opacity var(--t-1) var(--ease-out);
+}
+
+.codes.on {
+  opacity: 1;
+}
+
+/* ── 字根卡的键位提示（生字 / 答错后才出现）───────────────────────
+   结构是两段：字母行（`G 王`）+ 口诀行，不是原来那串 18px/700 的整串。
+   **高度必须恒定 78px**（字母行 28 + 间距 6 + 口诀区 44）：
+   纸是 `overflow: auto`、屏幕键盘是纸内最后一个子元素 —— 这块只要长高
+   1px，键盘就被推出纸外一截。所以没有口诀时口诀区是**空白占位**，
+   不是 display:none；整块没有内容时也靠 height 撑住。
+   纸上因此恒为 168 + 6 + 78（见 .bigwrap 与 .item 的 gap）。 */
+
+/* 题面容器要按纸宽撑开，提示块才拿得到真实可用宽度。
+   不撑开的话 `.item` 是收缩宽度（父级 align-items:center），
+   `.cr-mn` 的 100% 就退化成「口诀自己那点自然宽度」——
+   390 宽上长口诀不会换行，直接顶出纸外。
+   大字与屏幕键盘仍然是居中的（align-items:center 不受影响）。 */
+.pc.mode-roots .item {
+  width: 100%;
+}
+.codes.roots {
+  display: flex;
+  flex-direction: column;
+  /* 6px 就是「口诀行与上行的间距」，算在这 78px 之内 */
+  gap: 6px;
+  width: 100%;
+  height: 78px;
+  /* .item 的 gap 已经给了 6px，这里不再叠 margin-top —— 否则就是 168 + 6 + 2 + 78 */
+  margin-top: 0;
+  letter-spacing: 0;
+  /* 两段各自淡入淡出，父级必须常亮：否则父级的 120ms 淡出会和子级叠成两层衰减 */
+  opacity: 1;
+}
+
+.codes.roots .cr-keys,
+.codes.roots .cr-mn {
+  opacity: 0;
+  transition: opacity var(--t-1) var(--ease-out);
+}
+
+.codes.roots.on .cr-keys,
+.codes.roots.on .cr-mn {
+  opacity: 1;
+}
+
+/* 撤除：口诀 80ms 无延迟先走，字母行延迟 60ms 再走 120ms。
+   读完口诀的那一眼，键位还在原地；两段同时消失会读成「整块闪了一下」。 */
+.codes.roots:not(.on) .cr-mn {
+  transition: opacity var(--t-0) var(--ease-out);
+}
+
+.codes.roots:not(.on) .cr-keys {
+  transition: opacity var(--t-1) var(--ease-out) 60ms;
+}
+
+/* 字母行：字母 22/700 mono 青 + 键名 15/500 --ink-2，两段**基线对齐**。 */
+.codes.roots .cr-keys {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  height: 28px;
+}
+
+.codes.roots .cr-k {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-22);
+  font-weight: var(--fw-b);
+  /* 覆盖 .codes 的 --ls-code（0.16em）：字母只有一个字符，那点字距只是把「G」推开 */
+  letter-spacing: 0;
+  line-height: 28px;
+  color: var(--accent);
+}
+
+.codes.roots .cr-name {
+  font-size: var(--fs-15);
+  font-weight: var(--fw-m);
+  letter-spacing: var(--ls-cjk);
+  /* line-height:1 让基线只由字号决定，28px 的行盒里不会因为行高把键名往下推 */
+  line-height: 1;
+  color: var(--ink-2);
+}
+
+/* 口诀：13/400，行高 22 → 满两行正好 44。390 宽不缩字号、不拆行，自然换行。 */
+.codes.roots .cr-mn {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  width: 100%;
+  max-width: 480px;
+  height: 44px;
+  margin: 0 auto;
+  overflow: hidden;
+  font-size: var(--fs-13);
+  font-weight: var(--fw-r);
+  line-height: 22px;
+  letter-spacing: var(--ls-cjk);
+  color: var(--ink-2);
+  text-align: center;
+}
+
+
+/* ───────────── 输入区（B-22） ─────────────
+   框本身不发光；是「聚焦」这件事让它发光 —— 这是全页第二处常驻光，瞬时态。 */
+
+.typebar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.typebox {
+  width: 360px;
+  max-width: 70vw;
+  height: 46px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  /* 输入框是这一页第二重要的东西（仅次于大字），所以它是**白底**：
+     --bg-inset 的米色在纸上读作「禁用」，白底 + 控件描边才读作「在这里打字」。 */
+  border: 1.5px solid var(--line-ctl);
+  border-radius: var(--r-3);
+  background: var(--bg-inset);
+  box-shadow: var(--edge-hi);
+  text-align: center;
+  font-family: inherit;
+  font-size: var(--fs-22);
+  font-weight: var(--fw-m);
+  letter-spacing: 0.12em;
+  color: var(--ink-1);
+  caret-color: var(--accent);
+  /* 这里不写 outline: none —— 那会把 tokens 的全局焦点环整条压掉，
+     键盘用户 Tab 进来什么都看不见（audit 在 #qin 上抓到过同一个错） */
+  transition: border-color var(--t-1) var(--ease-out), box-shadow var(--t-2) var(--ease-out);
+}
+
+.typebox:focus,
+.typebox:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(47, 230, 255, 0.14), 0 0 22px -6px var(--accent-c);
+}
+
+/* 跟打正文里跟着「当前字」跑的那个 input（JS 每帧改 left/top/width/height）。
+   它得完全隐形：没有面、没有描边、没有光标 —— 看得见的只有 .text .cur 那个框。
+   opacity 由 JS 写行内样式控制（找不到当前字时置 0），所以这里给 0 当默认。 */
+
+.fb {
+  height: 18px;
+  font-size: var(--fs-12);
+  color: var(--ink-3);
+  text-align: center;
+}
+
+.fb.ok { color: var(--accent); }
+
+/* 错误行：**不用下划线**。12px × 1.6 的行盒里，下划线离字底只有 2–3px，
+   会咬住 p / g / y 的下伸部，读起来像脏字。改用左侧 3px 竖条 ——
+   它和文字有 8px 间距，是「标记」而不是「划在字上的线」。
+   也不做面填充：8.2:1 的淡红已经是一块亮了，再铺底就是在暗页上放第二块高亮面。 */
+.fb.bad {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--danger);
+}
+
+.fb.bad::before {
+  content: '';
+  flex: none;
+  width: 3px;
+  height: 12px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.fb.standalone {
+  flex: 0 0 auto;
+  height: 18px;
+  padding: 0;
+}
+
+/* 休息提示：一行浮在拆解条上方，不进布局流（避免纸张高度跳一下）。
+   只出现一次，下一次按键淡出 —— 它是提醒，不是拦截。 */
+.resthint {
+  position: fixed;
+  left: 50%;
+  bottom: 96px;
+  z-index: var(--z-sticky);
+  transform: translate(-50%, 6px);
+  padding: 7px 16px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-full);
+  background: var(--bg-card);
+  box-shadow: var(--sh-md);
+  font-size: var(--fs-13);
+  color: var(--ink-2);
+  letter-spacing: var(--ls-cjk);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-3) var(--ease-out), transform var(--t-3) var(--ease-out);
+}
+
+.resthint.on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ───────────── 数据条（B-18） ─────────────
+   5 项等距，靠 1px 竖线分组。不做 5 张卡：卡片会把 5 个数字切碎，
+   而打字时余光扫的是「一条」。 */
+
+
+
+
+
+
+
+
+/* 主指标（速度）：大一档 + 点亮。顺序是固定的
+   （速度 / 准确率 / 码长 / 本篇 / 用时），所以用 :first-child 认它，
+   这样不必为了一个类名去改 practice.ts 的模板（C-06）。
+   用 drop-shadow 而不是 text-shadow —— 后者会糊字。 */
+
+
+/* ───────────── 拆解条（B-19 / B-20 / B-21 / E-06） ─────────────
+   不是一个弹窗，是常驻在正文下方的一条带子：必须永远在同一位置，
+   这样眼睛不需要「找」。 */
+
+.hintp {
+  position: relative;
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  background-color: var(--bg-card-a);
+  background-image: linear-gradient(180deg, rgba(150, 170, 255, 0.05), rgba(120, 90, 255, 0.07));
+  border: 1px solid var(--line-1);
+  border-top-color: var(--line-hi);
+  border-radius: var(--r-4);
+  box-shadow: var(--edge-hi);
+  overflow: hidden;
+}
+
+/* 与右栏面板同一语言：顶部一条 1px 光缝。 */
+.hintp::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    rgba(47, 230, 255, 0.42), var(--accent-c) 14%, var(--accent-b) 56%, transparent 94%);
+  box-shadow: 0 2px 9px -3px var(--accent-c);
+}
+
+/* 单字模式：拆解条压底（它是常驻信息，贴底比浮在中间更稳）。 */
+.pc.mode-item .stage > .hintp {
+  margin-top: auto;
+}
+
+.hintbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 18px;
+  color: var(--ink-2);
+  font-size: var(--fs-13);
+  letter-spacing: var(--ls-cjk);
+  transition: color var(--t-1) var(--ease-out), background var(--t-1) var(--ease-out);
+}
+
+.hintbar:hover {
+  color: var(--ink-1);
+  background: var(--accent-a);
+}
+
+/* Tab 键位：mono 10px + 1px 描边 —— 它得像一颗键帽，不能像一个词 */
+.hintbar em {
+  font-style: normal;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  color: var(--ink-2);
+  padding: 2px 6px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-1);
+}
+
+.hintbar svg {
+  opacity: 0.6;
+  margin-left: auto;
+  transition: transform var(--t-2) var(--ease-out);
+}
+
+.hintp.open .hintbar svg {
+  transform: rotate(180deg);
+}
+
+.hintbody {
+  display: none;
+  padding: 2px 16px 16px;
+}
+
+.hintp.open .hintbody {
+  display: block;
+}
+
+.hintmeta {
+  font-size: var(--fs-12);
+  color: var(--ink-3);
+  margin-bottom: 12px;
+  letter-spacing: var(--ls-cjk);
+}
+
+.hintmeta b {
+  font-family: var(--ff-mono);
+  font-weight: var(--fw-r);
+  color: var(--ink-2);
+}
+
+.hint-empty {
+  font-size: var(--fs-12);
+  color: var(--ink-3);
+  padding: 10px 0;
+}
+
+.hintrow {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.hintfoot {
+  margin-top: 12px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line-1);
+  font-size: var(--fs-11);
+  /* 11–12px 的「要读的字」用 ink-2：小字 + 低对比 = 眯眼 = 眼疲劳。 */
+  color: var(--ink-2);
+  letter-spacing: var(--ls-cjk);
+}
+
+/* 整字按区涂色（D-02③ 之后 s1…s5 承载的是「区号」）。
+   灰 = 这几笔不取码。 */
+.wbox {
+  width: 116px;
+  height: 116px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-3);
+  background: var(--bg-inset);
+  box-shadow: var(--edge-hi);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.wbox svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.wbox path {
+  fill: var(--line-3);
+}
+
+.wbox .s1 { fill: var(--zone-1); }
+.wbox .s2 { fill: var(--zone-2); }
+.wbox .s3 { fill: var(--zone-3); }
+.wbox .s4 { fill: var(--zone-4); }
+.wbox .s5 { fill: var(--zone-5); }
+/* D-02 的边界：zone 0（数据里没有区）走中性，和「没取到码」同一档灰 */
+.wbox .s0 { fill: var(--line-3); }
+
+.wbox b {
+  font-size: 44px;
+  font-weight: var(--fw-r);
+  color: var(--ink-read);
+}
+
+.wbox.empty b {
+  color: var(--ink-2);
+}
+
+/* 码位格：颜色 = 这个字根「所在的区」，不是「第几码」（D-02 / B-20）。
+   同一个键、同一个字根，在键盘图 / 字根表 / 拆字图里必须永远是同一个颜色。 */
+.rboxes {
+  display: flex;
+  gap: 10px;
+}
+
+.rbox {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-3);
+  background: var(--bg-inset);
+  box-shadow: var(--edge-hi);
+  color: var(--zc, var(--ink-2));
+}
+
+.rbox svg {
+  width: 36px;
+  height: 36px;
+}
+
+.rbox svg path {
+  fill: currentColor;
+}
+
+.rbox b {
+  font-size: 30px;
+  font-weight: var(--fw-r);
+  line-height: 1;
+}
+
+/* 键位字母：同色，11px mono，压在右下角。
+   E-06：删掉 opacity .85 —— 它把对比度从 8.15 压到 6.08:1，这点通透感不值。 */
+.rbox u {
+  position: absolute;
+  right: 5px;
+  bottom: 3px;
+  text-decoration: none;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  color: currentColor;
+}
+
+.rbox.c1 { --zc: var(--zone-1); }
+.rbox.c2 { --zc: var(--zone-2); }
+.rbox.c3 { --zc: var(--zone-3); }
+.rbox.c4 { --zc: var(--zone-4); }
+/* 0 = 不取码（一个字根多于四个时，中间那些五笔不取），中性回退。
+   没有这一条，color 会继承父级，出现「字根没色但键位字母有色」的错位。 */
+.rbox.c0 { --zc: var(--ink-2); }
+
+/* 识别码格：不是字根，所以不画字形 —— 但**占第 5 档颜色**（紫）。
+   「第几码」这条色带是连续的：前四位红黄绿蓝，第五位也该有第五个颜色，
+   留灰会让它读成「没有码位」。虚线框另外承担「这格不是字根」的形状信号。 */
+.rbox.ident {
+  --zc: var(--zone-5);
+  border-style: dashed;
+  border-color: var(--line-3);
+  background: transparent;
+  box-shadow: none;
+}
+
+.rbox.ident b {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-r);
+  color: var(--zone-5);
+  letter-spacing: var(--ls-cjk);
+}
+
+/* 图例（B-21）：色标 8→10px 并加一圈内描边 ——
+   第 1 码 #EC8A86 与第 2 码 #E8A951 只差 33°、明度都在 L70 上下，
+   8px 的小点实测被读成同一个「暖黄」。色值不能改，只能加面积 + 加第二重线索。 */
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  max-width: 372px;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-12);
+  color: var(--ink-2);
+}
+
+.legend i {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 2px;
+  background: currentColor;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  font-style: normal;
+}
+
+.legend b {
+  font-weight: var(--fw-r);
+}
+
+.legend em {
+  font-style: normal;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  color: var(--ink-3);
+}
+
+/* 五色只有一套（--zone-1…5），它在两个容器里承载两种语义，
+   界面必须自己把话说清楚 —— 这是同一条色带被复用，不是两套配色：
+   · `.c1`–`.c4` = **这个字的第 1–4 码**（拆解图、词组图；识别码是第 5 档 .lz 紫）
+   · `.l1`–`.l5` = **这个字根所在的区**（字根卡，那行文字写着「第 N 区」） */
+.legend .c1,
+.legend .l1 { color: var(--zone-1); }
+.legend .c2,
+.legend .l2 { color: var(--zone-2); }
+.legend .c3,
+.legend .l3 { color: var(--zone-3); }
+.legend .c4,
+.legend .l4 { color: var(--zone-4); }
+.legend .c5,
+.legend .l5 { color: var(--zone-5); }
+/* 识别码 = 第 5 档（紫），和左图那一格同色；无码位（不取码的字根）才是中性灰 */
+.legend .lz,
+.legend .c5 { color: var(--zone-5); }
+.legend .c0,
+.legend .l0 { color: var(--ink-3); }
+
+.legend .lz i {
+  background: transparent;
+  border: 1px dashed currentColor;
+  box-shadow: none;
+}
+
+/* 字根名回到中性色：不写这一条，它会被 li 的区色带跑 */
+.legend li > b {
+  color: var(--ink-1);
+}
+
+/* 键位字母取区色：11px mono 比 10px 色标更易判色，是第二重线索 */
+.legend li > em {
+  color: currentColor;
+}
+
+/* 词组四格。⚠️ 这里的 .k1..k4 是**码序**，不是区号 ——
+   团队已拍板：单字/字根按区上色，词组按码序，两套语义并存（承载对象不同）。
+   词组若改用区色会丢信息：一个词里出现两次竖区，颜色就重复了。
+   图注「颜色 = 这个字的第几码」是这条语义的唯一说明，不许删、不许改口径。 */
+.wgrid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.wcell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.wkeys {
+  display: flex;
+  gap: 4px;
+}
+
+.wkeys span {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  padding: 1px 4px;
+  border-radius: var(--r-1);
+  background: var(--bg-inset);
+}
+
+.wkeys .k1 { color: var(--zone-1); }
+.wkeys .k2 { color: var(--zone-2); }
+.wkeys .k3 { color: var(--zone-3); }
+.wkeys .k4 { color: var(--zone-4); }
+
+/* ───────────── 屏幕键盘（B-25） ─────────────
+   区色只染字母，不染键帽 —— 键帽一旦上区色，「选中/按下」就没有颜色可用了。 */
+
+.kb {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 0 2px;
+  border-top: 1px solid var(--line-1);
+  margin-top: 10px;
+}
+
+.kb[hidden] {
+  display: none;
+}
+
+.kbrow {
+  display: flex;
+  gap: 6px;
+}
+
+.key {
+  width: 62px;
+  height: 52px;
+  border-radius: var(--r-2);
+  /* 描边必须是 --line-ctl：键帽是**按钮**，轮廓 ≥3:1（#D9D0BF 只有 1.53）。 */
+  border: 1px solid var(--line-ctl);
+  /* 键帽是**凸起**的：白底 + 一点点投影。用凹槽色（--bg-inset）会让它读成洞，
+     而且区色字母压在米色上只有 3.9–4.3:1（审计拦下过 10 处）。 */
+  background: var(--bg-inset);
+  box-shadow: var(--edge-hi);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  color: var(--ink-2);
+  transition: transform var(--t-1) var(--ease-out), border-color var(--t-1) var(--ease-out),
+    background-color var(--t-1) var(--ease-out), box-shadow var(--t-2) var(--ease-out);
+}
+
+.key span {
+  font-family: var(--ff-mono);
+  font-size: 17px;
+  line-height: 1.1;
+  color: var(--ink-1);
+}
+
+.key em {
+  font-style: normal;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+}
+
+.key:hover {
+  border-color: var(--line-3);
+  background: var(--bg-raised);
+}
+
+.key:active {
+  transform: translateY(1px);
+}
+
+/* 提示态：第一次见到某个字根 / 答错之后，正确那颗键常亮（不呼吸、不闪）。
+   等效 2px 描边用 box-shadow 画，**不写 2px border** ——
+   改 border 宽度会让键帽里的字母与键名整体跳 1px。 */
+.key.hint {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), var(--sh-md);
+}
+
+/* 答对闪烁必须写在 .hint **之后**：同一帧两者都在时由 .ok 覆盖，
+   170ms 后由 JS 一起撤（见 practice.ts 的 setKeyHint）。 */
+.key.ok {
+  border-color: var(--accent);
+  background: var(--accent-a);
+  box-shadow: var(--sh-xs), var(--edge-hi);
+}
+
+.key.ok span {
+  color: var(--accent);
+}
+
+.key.bad {
+  border-color: var(--danger);
+  background: var(--danger-a);
+}
+
+.key.bad span {
+  color: var(--danger-hi);
+}
+
+.key.z1 span { color: var(--zone-1); }
+.key.z2 span { color: var(--zone-2); }
+.key.z3 span { color: var(--zone-3); }
+.key.z4 span { color: var(--zone-4); }
+.key.z5 span { color: var(--zone-5); }
+
+.key.z0 span,
+.key.z0 em {
+  color: var(--ink-3);
+}
+
+/* 提示态的字母转 --ink-1：这一颗键此刻要回答的是「按哪个键」，
+   不是在教「哪个区」，区色在 2px 青环里对比也不够。
+   带 :not(.ok) —— 答对那一帧要留给 .ok 的青，别被这一条抢掉；
+   区色那几条（.key.z1 span …）就在上面，靠 3 个类名压过它们。 */
+.key.hint:not(.ok) span {
+  color: var(--ink-1);
+}
+
+.kbfoot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.kbtip {
+  font-size: var(--fs-11);
+  color: var(--ink-3);
+}
+
+/* ───────────── 底栏（B-24 / B-28） ─────────────
+   高 44px（原 40）。字从 11px 提到 13px —— 底栏上那三样
+   （本卡练过 / 快捷键 / 进度）都是要在打字时用余光扫的，11px 中文在暗底上
+   低于可读下限。这是「练习页字太小」的第二处。 */
+
+.pfoot {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  height: 44px;
+  padding: 0 var(--sp-4);
+  border-top: 1px solid var(--line-1);
+  font-size: var(--fs-13);
+  color: var(--ink-2);
+}
+
+.pfoot .fp {
+  font-family: var(--ff-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-13);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.pfoot .bar {
+  position: relative;
+  flex: 1;
+  height: 2px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.pfoot .bar i {
+  position: relative;
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width var(--t-3) var(--ease-out);
+}
+
+.pfoot .bar i::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -1px;
+  bottom: -1px;
+  width: 4px;
+  background: var(--accent);
+  box-shadow: 0 0 9px var(--accent-c);
+}
+
+.pfoot .keys {
+  flex: 0 0 auto;
+  font-size: var(--fs-12);
+  /* 11–12px 的「要读的字」用 ink-2：小字 + 低对比 = 眯眼 = 眼疲劳。 */
+  color: var(--ink-2);
+  white-space: nowrap;
+  letter-spacing: var(--ls-cjk);
+  transition: opacity var(--t-3) var(--ease-out);
+}
+
+/* 开练 30 秒后退到次要：快捷键提示是「第一次用需要、以后不需要」的信息。
+   不隐藏（新用户还要看），只把不透明度压到 0.45，鼠标移回来就恢复。 */
+.pfoot .keys.is-dim {
+  opacity: 0.45;
+}
+
+.pfoot:hover .keys.is-dim,
+.pc:focus-within .keys.is-dim {
+  opacity: 1;
+}
+
+.pfoot kbd {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  color: var(--ink-2);
+  background: var(--bg-inset);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-1);
+  padding: 1px 4px;
+  margin-right: 2px;
+}
+
+/* 弹层里的页脚只有 `.popfoot` 一套。 */
+
+/* ───────────── 浮层 / 对话框（B-26 / B-27） ───────────── */
+
+.ov {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-pop);
+  display: grid;
+  place-items: center;
+  background: rgba(4, 2, 12, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.ov[hidden] {
+  display: none;
+}
+
+.ovbox {
+  position: relative;
+  width: min(420px, calc(100vw - 48px));
+  padding: 24px;
+  background: var(--bg-card); /* 不透明：浮层必须挡住内容 */
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-5);
+  box-shadow: var(--shadow-modal);
+  /* 只有模态框允许位移入场 */
+  animation: ov-in var(--t-2) var(--ease-out);
+}
+
+/* 顶边 1px 光缝：与右栏面板同一语言，让浮层读作「插上来的模块」 */
+.ovbox::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  border-radius: var(--r-5) var(--r-5) 0 0;
+  background: linear-gradient(90deg, transparent, var(--accent-c) 26%, var(--accent-c) 62%, transparent);
+  pointer-events: none;
+}
+
+@keyframes ov-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ovbox h2 {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-16);
+  font-weight: var(--fw-sb);
+  letter-spacing: var(--ls-cjk);
+}
+
+.ovmeta {
+  margin: 0 0 20px;
+  font-size: var(--fs-13);
+  color: var(--ink-3);
+}
+
+.ovrow {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.resgrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin-bottom: 20px;
+}
+
+.rc {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rc s {
+  text-decoration: none;
+  font-size: var(--fs-11);
+  color: var(--ink-3);
+}
+
+.rc b {
+  font-family: var(--ff-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-15);
+  font-weight: var(--fw-r);
+  color: var(--ink-1);
+}
+
+/* 键位速查（<dialog>） */
+.kbdialog {
+  width: min(680px, calc(100vw - 48px));
+  padding: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-5);
+  color: var(--ink-1);
+  box-shadow: var(--shadow-modal);
+}
+
+.kbdialog::backdrop {
+  background: rgba(4, 2, 12, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.kbhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line-1);
+  font-size: var(--fs-13);
+  font-weight: var(--fw-m);
+  letter-spacing: var(--ls-cjk);
+  color: var(--ink-1);
+}
+
+.kbdetail {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line-1);
+}
+
+.kdhead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  color: var(--gc, var(--ink-1));
+}
+
+.kdhead b {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-22);
+  font-weight: var(--fw-r);
+}
+
+.kdhead .kdname {
+  font-size: var(--fs-13);
+  color: var(--ink-2);
+}
+
+.kdhead .kdcode {
+  margin-left: auto;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  color: var(--ink-3);
+}
+
+.kdmn {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  line-height: var(--lh-base);
+}
+
+.kdroots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.kdroot {
+  position: relative;
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-3);
+  background: var(--bg-inset);
+  box-shadow: var(--edge-hi);
+  color: var(--gc, var(--ink-2));
+}
+
+.kdroot svg {
+  width: 40px;
+  height: 40px;
+}
+
+.kdroot svg path {
+  fill: currentColor;
+}
+
+.kdroot b {
+  font-size: 26px;
+  font-weight: var(--fw-r);
+}
+
+/* 选中态：inset 描边，不是发光 —— 这是「选中的是哪一格」，不是「这一格在发光」 */
+.kdroot.cur {
+  border-color: var(--gc, var(--ink-1));
+  box-shadow: inset 0 0 0 1px var(--gc, var(--ink-1));
+}
+
+.kdroot i {
+  position: absolute;
+  bottom: 2px;
+  right: 5px;
+  font-style: normal;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  color: var(--ink-3);
+}
+
+.kdnote {
+  margin-top: 10px;
+  font-size: var(--fs-11);
+  color: var(--ink-3);
+}
+
+/* 自定义卡片弹层（复用 .kbdialog 的骨架，只是窄一点） */
+.custdlg {
+  width: min(640px, calc(100vw - 40px));
+}
+
+.custbody {
+  padding: 16px 18px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.curow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.curow.col {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+}
+
+.culabel {
+  flex: 0 0 auto;
+  width: 64px;
+  font-size: var(--fs-12);
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.curow.col .culabel {
+  width: auto;
+  justify-content: flex-start;
+}
+
+.culink {
+  color: var(--accent);
+  font-size: var(--fs-11);
+  cursor: pointer;
+  border-bottom: 1px solid var(--accent-b);
+}
+
+.custitle {
+  height: 38px;
+  font-size: var(--fs-14);
+}
+
+.cutext {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-ctl);
+  border-radius: var(--r-3);
+  /* 白底，和上面那个「卡片名」输入框一致 —— 两个都是「你要往里写东西」的框，
+     一个白一个米，会读成「这个不能填」。 */
+  background: var(--bg-inset);
+  color: var(--ink-1);
+  box-shadow: var(--sh-xs);
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: var(--lh-base);
+  resize: vertical;
+  transition: border-color var(--t-1) var(--ease-out), box-shadow var(--t-2) var(--ease-out);
+}
+
+.cutext:focus,
+.cutext:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(47, 230, 255, 0.14);
+}
+
+.cumeta {
+  font-size: var(--fs-12);
+  color: var(--ink-3);
+}
+
+.cumeta b {
+  font-family: var(--ff-mono);
+  font-weight: var(--fw-r);
+  color: var(--ink-1);
+}
+
+.cumsg {
+  font-size: var(--fs-11);
+  color: var(--ink-3);
+}
+
+.cumsg.bad {
+  color: var(--danger-hi);
+}
+
+.custfoot {
+  padding: 14px 18px 16px;
+}
+
+/* ───────────── 通用文本输入框（自定义卡弹层用） ─────────────
+   编码查询整页删掉之后，只有 `.custitle` 还在用这套输入框样式；
+   它本来就与查询无关（`.qinput` 只是历史类名），所以留在这里。 */
+
+.qinput {
+  flex: 1;
+  height: 46px;
+  padding: 0 14px;
+  /* 输入框是这一页第二重要的东西（仅次于大字），所以它是**白底**：
+     --bg-inset 的米色在纸上读作「禁用」，白底 + 控件描边才读作「在这里打字」。 */
+  border: 1.5px solid var(--line-ctl);
+  border-radius: var(--r-3);
+  background: var(--bg-inset);
+  box-shadow: var(--edge-hi);
+  color: var(--ink-1);
+  font-family: inherit;
+  font-size: 17px;
+  transition: border-color var(--t-1) var(--ease-out), box-shadow var(--t-2) var(--ease-out);
+}
+
+.qinput:focus,
+.qinput:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(47, 230, 255, 0.14);
+}
+
+/* 一个字的全部候选码（图解面板底部的 `.codechips` 用）。 */
+/* ───────────── toast / 撤销（§7.15） ─────────────
+   右下角、只有一个动作、只在角落。它不是「打断」，不许抢正文焦点。
+   严重度用**左边缘 2px 竖条**表达（青 = 可撤销 / 洋红 = 失败），不是图标、不是底色。
+   位置 fixed 只作用于这个小盒，不盖正文（宽 420 上限、贴右下 24）。 */
+
+.toasts {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  position: relative;
+  width: min(420px, calc(100vw - 48px));
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 14px 11px 16px;
+  background: var(--bg-card); /* 不透明：它压在页面内容上 */
+  border: 1px solid var(--line-ctl);
+  border-radius: var(--r-4);
+  box-shadow: var(--shadow-2);
+  pointer-events: auto;
+  animation: ov-in var(--t-2) var(--ease-out);
+}
+
+.toast::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  bottom: -1px;
+  width: 2px;
+  border-radius: var(--r-4) 0 0 var(--r-4);
+  background: var(--accent);
+}
+
+/* 失败：洋红竖条 + role=alert + 不自动消失（阻断信息不该自己走） */
+.toast.err::before {
+  background: var(--danger);
+}
+
+.toast .tbody {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.toast .tx {
+  font-size: var(--fs-13);
+  color: var(--ink-1);
+  line-height: 1.45;
+}
+
+.toast .sub {
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+
+/* 倒计时：11px mono（字号阶梯从 11 起，而且「还剩几秒」是时效信息，不该比标签还小） */
+.toast .left {
+  font-family: var(--ff-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-11);
+  color: var(--ink-3);
+  margin-left: 6px;
+}
+
+.toast .tacts {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+/* 动作是青色文字 + 1px 下划线，不做胶囊 —— 胶囊在这套语言里是「按钮」，而这是「一句话的动作」 */
+.toast .act {
+  font-size: var(--fs-13);
+  color: var(--accent);
+  border-bottom: 1px solid var(--accent-b);
+  padding: 0 1px 1px;
+  white-space: nowrap;
+  transition: color var(--t-1) var(--ease-out);
+}
+
+.toast .act:hover {
+  color: var(--accent-hi);
+}
+
+.toast .x {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  font-size: var(--fs-12);
+  color: var(--ink-4); /* 图形，不是文字 */
+  border-radius: var(--r-1);
+}
+
+.toast .x:hover {
+  background: var(--bg-raised);
+  color: var(--ink-1);
+}
+
+/* [hidden] 的 UA 规则是 display:none，但它输给任何作者声明的 display ——
+   .pfoot 是 flex、.hintp 也是 flex，所以要显式认一次 hidden，否则「隐藏」了还占着地方。 */
+.pfoot[hidden],
+.hintp[hidden] {
+  display: none;
+}
+
+/* ═══════════════ 响应式 ═══════════════
+   规则都是量过的，别按「感觉」调：
+   1920+ 的上限加在「整块内容」上（加在 .hm 上会让顶栏跟着往中间收）。 */
+
+@media (min-width: 1920px) {
+  .hmbody {
+    max-width: 1504px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+/* 手机上「左栏滚到底、再切到右栏滚」是两个滚动区叠在一屏里，很难受：
+   改成 hmbody 整页滚，右栏内容排到卡片之后，两栏都不再各自滚。
+   顶栏留在原位（.hm 仍是 100dvh + overflow:hidden —— 三件套不动）。 */
+@media (max-width: 900px) {
+  .hmbody {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .hmleft {
+    display: block;
+    flex: none;
+    width: auto;
+    overflow: visible;
+  }
+
+  /* 右栏没了，窄屏只剩一列卡片；auto-fill 会自己退到 1–2 列，
+     这里只补一条「窄屏两列」的显式下限。 */
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .paper {
+    padding: 20px 18px 26px;
+  }
+
+  .typebox {
+    width: 300px;
+    height: 44px;
+    font-size: 20px;
+  }
+
+  .custbody {
+    padding: 14px 14px 4px;
+  }
+
+  .curow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .culabel {
+    width: auto;
+  }
+}
+
+
+@media (max-width: 760px) {
+  /* 顶栏在 ≤760 改成两行（见文件末尾），所以这里不再需要为了省宽度
+     把「累计字数」整块隐藏 —— 那是用户点名要留在顶栏的信息。 */
+
+
+
+  .hintrow {
+    gap: 14px;
+  }
+
+  .legend {
+    max-width: none;
+  }
+}
+
+/* 手机上两列时卡片只有 157px，「单字 · 1001–1500」在 15px 字号下会折行。
+   收一点内边距和字号，让这类标题保持单行；不缩短标题文案，那会丢信息。 */
+@media (max-width: 560px) {
+  /* §6.1：桌面那个 1200×300 的光池在 390 上等于「整幅提亮顶部」，
+     实测顶/卡亮度比 7×，卡片读作「亮场里的暗洞」—— 直接退场，不是缩小。
+     顶栏那颗 72px 数据包同理：窄屏里它是噪点。 */
+  .hmleft::before,
+  .topbar::before {
+    display: none;
+  }
+
+  /* 顶栏左右内边距跟卡片网格的左缘对齐（都是 16），不然品牌会顶到屏幕边 */
+  .topbar {
+    padding: 0 var(--sp-4);
+    gap: var(--sp-3);
+  }
+
+  .topbar .brand.brandhome {
+    padding-left: 26px;
+    font-size: var(--fs-15);
+  }
+
+  /* 窄屏缩到 20px，左边距同步收到 26：品牌整体还占原来那么宽，版本号不挪 */
+  .topbar .brandlogo {
+    width: 20px;
+    height: 20px;
+    margin-top: -10px;
+  }
+
+  .gsum {
+    display: none;
+  }
+
+  .hmleft {
+    padding: 0 var(--sp-4) var(--sp-7);
+  }
+
+  .grid {
+    gap: 10px;
+  }
+
+  /* 卡高是结构值（158），窄屏也不动它 —— 动了三组的行高就不一致，
+     一屏里会出现三种卡高。只收内边距和大字。 */
+  .card {
+    padding: 14px 14px 18px;
+  }
+
+  .cbig {
+    font-size: 25px;
+  }
+
+  .stage {
+    padding: var(--sp-2) var(--sp-2) 0;
+    gap: var(--sp-2);
+  }
+
+  .bigchar {
+    font-size: var(--fs-72);
+  }
+
+  .bigwrap {
+    min-height: 130px;
+  }
+
+  .pc.mode-item .paper {
+    padding: 18px 16px 20px;
+  }
+
+  .session .sbar {
+    display: none;
+  }
+
+  .pfoot .keys {
+    display: none;
+  }
+
+  .rbox {
+    width: 54px;
+    height: 54px;
+  }
+
+  .rbox svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .rbox b {
+    font-size: 24px;
+  }
+
+  .hintbody {
+    padding: 2px 12px 14px;
+  }
+}
+
+/* 矮窗：字根卡的键位提示常占 78px，而屏幕键盘是纸里最后一个子元素、
+   纸又是 overflow:auto —— 768 高的窗口里键盘会被推出纸外。
+   把大字区 168 压到 132 抵消一部分（这个数是按提示块的高度量出来的，
+   不要再缩字号或改纸的内边距）。 */
+@media (max-height: 768px) {
+  .bigwrap {
+    min-height: 132px;
+  }
+}
+
+/* ═══════════════ 进度对话框（U-03） ═══════════════ */
+
+.savedlg {
+  width: min(420px, calc(100vw - 40px));
+  padding: 0;
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-4);
+  background: var(--bg-card);
+  color: var(--ink-1);
+  box-shadow: var(--shadow-2);
+}
+
+.savedlg::backdrop {
+  background: rgba(4, 2, 12, 0.68);
+  backdrop-filter: blur(3px);
+}
+
+.savehead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 0;
+}
+
+.savehead h2 {
+  margin: 0;
+  font-size: var(--fs-15);
+  font-weight: var(--fw-m);
+  letter-spacing: var(--ls-cjk);
+}
+
+.savesub {
+  margin: 8px 16px 14px;
+  font-size: var(--fs-12);
+  line-height: 1.7;
+  color: var(--ink-3);
+}
+
+.saveacts2 {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+
+.saveacts2 .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+
+
+
+
+
+
+
+
+
+@media (max-width: 760px) {
+  /* 窄屏上「品牌 + 版本 + Lv + 段位 + 字数 + 货币」一行放不下，硬挤会把金额切掉
+     （390 实测：`2🟡8⚪40🟠` 被裁成 `2840`）。
+     改成两行：第一行是身份（品牌 / 版本），第二行是数据（Lv / 段位 / 字数 / 货币）。
+     数据一个都不删 —— 那是「这台设备上还有没有进度」的直接证据。 */
+  .topbar {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    row-gap: 8px;
+  }
+
+  .topbar .userdata {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  /* 窄屏删掉「累计」两个字，两个读数都留：
+     时长与字数各自带 title（累计练习时长 / 累计字数），语义不丢。 */
+  .topbar .accum .alabel {
+    display: none;
+  }
+
+}
+
+/* ═══════════════ 等级 / 段位弹层（popover，不是模态 dialog） ═══════════════
+   为什么不是模态 dialog：这是「查一眼数据」，不是「做一个决定」。
+   模态要加一层 rgba(4, 2, 12, 0.72) 背板把整页压暗 —— 而用户恰恰想**对照着**看：
+   我 Lv.5、离下一个段位还差几级、那一段要多少钱。背板会把参照物一起关掉。
+
+   技术形态也不用 `<dialog>.show()`：**非模态 dialog 不派发 `cancel` 事件**，
+   Esc 根本不会关（只有 showModal 才有）。所以是 `<div role="dialog"
+   aria-modal="false" hidden>` + 自己绑 keydown（见 topbar.ts 的 mountTopbarPops）。
+
+   **定位贴着顶栏右端**：右栏拆掉之后，弹层从哪一列展开已经没有意义了，
+   唯一稳定的锚是「顶栏右侧那颗触发器 → 从右边缘往下展开」，也就是 `right: 16px`。
+   三个触发器都在右侧，弹层从右边长出来，视线不会横跳。 */
+
+.pop {
+  position: fixed;
+  top: calc(var(--h-topbar) + var(--sp-2));
+  right: var(--sp-4);
+  z-index: var(--z-pop);
+  display: flex;
+  flex-direction: column;
+  width: 360px;
+  max-width: calc(100vw - var(--sp-8));
+  max-height: calc(100dvh - var(--h-topbar) - var(--sp-6));
+  background: var(--bg-card); /* 不透明：它要挡住下面的卡 */
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-4);
+  box-shadow: var(--shadow-2), var(--edge-hi);
+  overflow: hidden;
+}
+
+.pop[hidden] {
+  display: none;
+}
+
+/* 顶边 1px 光缝：与右栏面板同一语言，让弹层读作「插上来的模块」而不是一张贴纸 */
+.pop::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    rgba(47, 230, 255, 0.46), var(--accent-c) 18%, var(--accent-b) 64%, transparent 96%);
+}
+
+.pophead {
+  flex: 0 0 auto;
+  position: relative;
+  /* **盖住那条缝**：粘性表头在部分 DPR / 缩放（1.25、1.5、2 且滚动量为小数）下，
+     Chrome 会把表头背景少画 1–3px，下面的行就从那道缝里透出来
+     （用户截图里能看见当前行那 2px 青书签的顶端）。
+     物理上补一张不透明的「唇」：表头自己的背景 + 往下多画 3px 的同色阴影，
+     再抬一层 z-index —— 不依赖表头背景是否恰好整除像素。 */
+  z-index: 3;
+  background: var(--bg-card);
+  box-shadow: 0 3px 0 var(--bg-card);
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 14px 8px;
+}
+
+/* 标题 + 关闭钮占第一行，副标题整行放第二行。
+   原来三样挤在一行，副标题一长就把 ✕ 顶到容器外。 */
+.pophead .ptitle { order: 1; flex: 1 1 auto; min-width: 0; }
+.pophead .popx { order: 2; }
+.pophead .psub {
+  order: 3;
+  flex: 1 1 100%;
+  line-height: 1.5;
+}
+
+.pophead .ptitle {
+  font-size: var(--fs-13);
+  font-weight: var(--fw-m);
+  letter-spacing: var(--ls-cjk);
+  color: var(--ink-1);
+}
+
+.pophead .psub {
+  font-size: var(--fs-11);
+  color: var(--ink-3);
+}
+
+.pophead .popx {
+  margin-left: auto;
+  min-width: 22px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: var(--fs-11);
+}
+
+/* 滚动容器必须**可聚焦**：不解 tabindex="0" 的话，键盘用户滚不动 100 行。
+   焦点环收到容器内（弹层是 overflow:hidden，环推到外面会被裁掉）。 */
+.pbody {
+  /* 396 是「900 高的窗口里正好 13 行」的读数，但它不是全部：
+     pop 自己已经有 max-height: calc(100dvh - 顶栏 - 24)，这里再给 flex:1 1 auto
+     + min-height:0，窗口矮到 768 / 600 时主体会自己收缩 —— 否则弹层被 max-height
+     截断，`popfoot` 那两行会被 overflow:hidden 切掉（§11.10-2）。 */
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 396px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pbody:focus-visible {
+  outline-offset: -3px;
+}
+
+.pbody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pbody::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pbody::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: var(--r-2);
+}
+
+.pbody:hover::-webkit-scrollbar-thumb {
+  background: var(--line-3);
+}
+
+/* ── 真表格 ─────────────────────────────────────────────────────
+   弹层里是**表格数据**，所以用 `<table>`：列头 `scope="col"`、
+   每 10 级的段头 `<th colspan scope="rowgroup">`。用 div 拼网格的话，
+   读屏既没有列头也没有行组，100 行念下来是一串没有边界的数字。 */
+.ptable {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.ptable col.c1 { width: 84px; }
+/* 列头：11px 小标签，靠字距和位置成立，不靠加粗；滚走之后仍贴在顶上 */
+.ptable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  height: 24px;
+  padding: 0 12px;
+  background: var(--bg-card);
+  /* 用 box-shadow 画那条线而不是 border-bottom：border 会让盒子高 25，
+     而 sticky 的 `top` 是按 border-box 算的，两者差 1px 就是那条缝。 */
+  box-shadow: inset 0 -1px 0 var(--line-1), 0 -2px 0 var(--bg-card);
+  font-family: var(--ff-ui);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-r);
+  letter-spacing: var(--ls-label);
+  color: var(--ink-3);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* 分段头：滚到 Lv.63 时仍然知道自己在 61–70 这一段。
+   只写真实区间，不发明「境界名」—— 项目里没有那套命名。 */
+.pseg th {
+  position: sticky;
+  /* 23 而不是 24：**粘性表头之间必须重叠 1px**。
+     24/24 相邻时，在 devicePixelRatio=2 的屏上滚动到半像素位置，
+     两行之间会出现一条发丝缝，行文字就从缝里漏出来（实测
+     「列表向上滑动时部分文字会从这一个缝隙中漏出来」）。
+     压 1px 后被表头（z-index 3）盖住，缝就没有了。 */
+  top: 23px;
+  z-index: 2;
+  height: 24px;
+  padding: 0 12px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--line-1);
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-r);
+  letter-spacing: var(--ls-label);
+  color: var(--ink-3);
+  text-align: left;
+}
+
+.pseg:first-child th {
+  border-top: 0;
+}
+
+/* 数据行的第一格是**行头**（`<th scope="row">`，见 topbar.ts）：
+   读屏念到「Lv.5，本级需要 4,582」时，「Lv.5」是这一行的名字。
+   th 默认加粗居中，这里显式拉回 400 / 左对齐 —— 视觉与原来的 td 一模一样。 */
+.prow > * {
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prow > th {
+  font-weight: var(--fw-r);
+  text-align: left;
+}
+
+.prow:hover > * {
+  background: var(--bg-raised);
+}
+
+/* 当前行：行底抬一档 + 左侧 2px 青书签条 + 主列转青。
+   **只有一个强信号** —— 不加边框、不加底色块、不改行高。 */
+.prow.cur > * {
+  background: var(--bg-raised);
+}
+
+.prow.cur > :first-child {
+  position: relative;
+}
+
+.prow.cur > :first-child::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+  box-shadow: var(--sh-xs);
+}
+
+.prow.cur .plv {
+  color: var(--accent);
+  font-weight: var(--fw-m);
+}
+
+/* 数字列一律等宽右对齐：100 行比大小靠的是位次，不是读字 */
+.plv,
+.pneed,
+.pcum {
+  font-variant-numeric: tabular-nums;
+}
+
+.plv {
+  font-family: var(--ff-mono);
+  color: var(--ink-2);
+}
+
+.pneed {
+  font-family: var(--ff-mono);
+  color: var(--ink-3);
+}
+
+.pcum {
+  font-family: var(--ff-mono);
+  color: var(--ink-1);
+}
+
+.ptable-lv .pneed,
+.ptable-lv .pcum {
+  text-align: right;
+}
+
+/* ═══════════════ 图解面板 v3：说明 + 编码表（docs/design-v3.md §5 / §11.6） ═══════════════
+   一个面板里必须分得开两套语言：
+     · 左图 / 图例：颜色 = 这个字根**所在的区**（只在 .wbox / .rbox / .legend i 三个容器里）；
+     · 说明 / 编码表：**不上区色**。位次靠编码表的列位表达（表头 1 2 3 4），
+       说明里的键位一律中性键帽 .kk。
+   否则 `想` 的 s 在左图是撇区绿、在表里是第 1 码红 —— 同一个字母两个颜色。
+
+   纸面腾挪的算术：面板总高 = 40（.hintbar）+ 抬头 16 + 6 + 两栏标题高 + 图注 34。
+   两栏之后「想」实测 ≈ 300，900 高的屏上纸张仍有 300 上下 —— 单字正文约 264，
+   所以不需要任何折叠也能同时看见字和图解。 */
+
+.hintcols {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 18px 28px;
+  align-items: start;
+}
+
+/* 左栏：图 + 图例。图本身沿用 .wbox / .rboxes 的既有尺寸，不在这里改。 */
+.hintfig {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.hintfig .legend {
+  max-width: none;
+}
+
+.hinttext {
+  min-width: 0;
+}
+
+/* ── 抬头：类别 chip ────────────────────────────────────────────────
+   一张面板一上来就说清「这个字适用哪条规则」，不用用户自己从「几码」倒推。 */
+.tag {
+  flex: none;
+  padding: 0 5px;
+  font-size: var(--fs-11);
+  line-height: 16px;
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+  background: var(--bg-inset);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-1);
+}
+
+.hintmeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ── 说明：固定两段 ────────────────────────────────────────────────
+   段一 = 这个字属于哪条规则；段二 = 这条规则在这个字上怎么落。
+   13px 是中文正文的下限（spec 自己的规矩），不再往下压。 */
+.ex {
+  margin: 0 0 8px;
+  font-size: var(--fs-13);
+  line-height: 1.75;
+  color: var(--ink-2);
+  letter-spacing: 0.01em;
+}
+
+.ex b {
+  font-weight: var(--fw-sb);
+  color: var(--ink-1);
+}
+
+/* 键位 chip：中性键帽，不上区色（理由见本节开头）。 */
+.kk {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 4px;
+  margin: 0 1px;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-13);
+  line-height: 18px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--ink-1);
+  background: var(--bg-inset);
+  border: 1px solid var(--line-2);   /* chip，不是控件 */
+  border-radius: var(--r-1);
+}
+
+/* 识别码用虚线壳：和左图那个虚线格是同一句话（形状说明它不是字根）。 */
+.kk.dash {
+  border-style: dashed;
+  color: var(--ink-2);
+}
+
+/* 规则箭头：是标点，不是图形，压到 --ink-3 就够。 */
+.arw {
+  margin: 0 0.35em;
+  color: var(--ink-3);
+}
+
+/* ── 编码表：3 列（码 / 级别 / 怎么打）──────────────────────────────
+   「第几码」不靠颜色，靠列位：4 个 20px 定宽格，表头写着 1 2 3 4。
+   于是「一级简码只填第 1 格、三级简码填前 3 格、全码填满」直接看得见。 */
+.ctable {
+  width: 100%;
+  margin-top: 4px;
+  border-collapse: collapse;
+}
+
+.ctable th {
+  padding: 0 0 6px;
+  font-size: var(--fs-11);
+  font-weight: var(--fw-r);
+  letter-spacing: var(--ls-label);
+  color: var(--ink-3);
+  text-align: left;
+  border-bottom: 1px solid var(--line-1);
+}
+
+.ctable th.cod {
+  width: 104px;
+}
+
+.ctable th.lv {
+  width: 92px;
+}
+
+.ctable td {
+  padding: 6px 0;
+  font-size: var(--fs-13);
+  color: var(--ink-3);
+  border-bottom: 1px solid var(--line-1);
+  vertical-align: middle;
+}
+
+.ctable tr:last-child td {
+  border-bottom: 0;
+}
+
+.ctable .lv {
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.ctable .lv b {
+  font-weight: var(--fw-m);
+  color: var(--ink-1);
+}
+
+.ctable .how {
+  font-size: var(--fs-13);
+  color: var(--ink-3);
+}
+
+/* 全码那一行：整张表的落点，字色抬一档，描边不变。 */
+.ctable tr.main .lv,
+.ctable tr.main .how {
+  color: var(--ink-2);
+}
+
+/* 列位刻度：数字与下面的码格同宽同起点（20px × 4）。 */
+.bits {
+  display: inline-grid;
+  grid-template-columns: repeat(4, 20px);
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0;
+}
+
+.bits i {
+  font-style: normal;
+  text-align: center;
+}
+
+/* 码格：每格 20px 宽、24 高，靠左细线分位。空格子不填内容。 */
+.cseq {
+  display: inline-grid;
+  grid-template-columns: repeat(4, 20px);
+}
+
+.cseq i {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 24px;
+  font-style: normal;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-15);
+  letter-spacing: 0;
+  color: var(--ink-1);
+  /* 列位的分隔线必须看得见 —— 这张表全靠它表达「第几码」。
+     --line-1 只有 1.25:1，暗卡上等于没有，所以提一档到 --line-2。 */
+  border-left: 1px solid var(--line-2);
+}
+
+.cseq i:first-child {
+  border-left: 0;
+}
+
+/* 空位：一条 6×1.5px 短横。和「今日任务未完成」同一个语法：**有位置、没内容**。
+   不用 0 或 · 填，那会看起来像真的有码。 */
+.cseq i.nil::after {
+  content: '';
+  width: 6px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: var(--ink-4);
+}
+
+.cseq i.nil {
+  color: transparent;
+}
+
+/* 识别码那一格：虚线分位 + 降一档的中性色，和左图的虚线格是同一句话。 */
+.cseq i.idc {
+  color: var(--ink-2);
+  border-left-style: dashed;
+}
+
+/* 表下注（「没有三级简码这一行，这是对的」）：只在需要时出现。 */
+.cnote {
+  margin: 10px 0 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--line-2);
+  font-size: var(--fs-13);
+  line-height: 1.7;
+  color: var(--ink-3);
+}
+
+.cnote b {
+  font-weight: var(--fw-m);
+  color: var(--ink-2);
+}
+
+/* 图注：13px（§11.6 —— 它是必读的一句，不许拿 11px 当装饰小字）。 */
+.hintfoot {
+  font-size: var(--fs-13);
+  line-height: 1.7;
+}
+
+/* ═══════════════ 轮次结束 / 本卡结算（同一个浮层，两态）（§1.8 / §11.5） ═══════════════
+   到点不结束本卡，只切轮；「结束本卡」不换浮层，就在这只盒子里切成结算态。
+   两态共用固定的四段骨架 —— 标题 / meta 单行 / 内容槽 / 按钮行 ——
+   切换时盒子不长高也不变宽，只做 160ms 的透明度交叉。
+   没有任何发光：它是一次「暂停一下的选择」，不是奖励时刻。 */
+
+.ovround {
+  width: min(480px, calc(100vw - 48px));
+}
+
+/* 焦点给盒子本身（不是某个按钮）：它是「接住焦点」的容器，不是可操作控件，
+   所以不画焦点环 —— 画了反而像「这里能按」。 */
+.ovround:focus {
+  outline: none;
+}
+
+.ovround h2 {
+  padding-right: 28px;
+  margin-bottom: 6px;
+}
+
+.ovround .ovr-meta {
+  margin: 0 0 10px;
+  font-family: var(--ff-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-13);
+  color: var(--ink-1);
+}
+
+/* 两态的交叉淡入：出 80ms + 入 80ms。只动 opacity ——
+   按钮行的文案与宽度两态不同，一滑就会读成「盒子在抖」。
+   `prefers-reduced-motion` 由 tokens.css 的全局规则压成 0.01ms。 */
+.ovround .ovfade {
+  transition: opacity var(--t-0) linear;
+}
+
+.ovround .ovfade.is-out {
+  opacity: 0;
+}
+
+/* 内容槽：高度锁死。
+   `min-height` 取结算态 7 格三列（3 行）的自然高度 —— 轮次态 4 格只有 2 行，
+   在槽里垂直居中，所以两态切来切去盒子一像素都不动。
+   用 min-height 而不是 height：网格再多一行（升级 / 轮次都出现时）也不会被裁。 */
+.ovr-slot {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 164px;
+  margin-bottom: var(--sp-4);
+}
+
+.ovr-slot > * {
+  width: 100%;
+}
+
+/* 结算网格在内容槽里，自己不再留底边距（留白由槽负责） */
+.ovround .resgrid {
+  margin-bottom: 0;
+}
+
+/* 隐藏态。`.ghost` 自己写了 `display:grid`、`.ovrow` 写了 `display:flex`，
+   都会盖掉 `[hidden]` 的 UA 规则 —— 所以这里要显式压回去。 */
+.ovround [hidden] {
+  display: none;
+}
+
+.ovround .ovrow[hidden] {
+  display: none;
+}
+
+/* 静默期里 ✕ 与按钮同一档：它也是「归零那一刻不该被按到」的那个点 */
+.ovround .ghost[aria-disabled='true'],
+.ovround .ghost[aria-disabled='true']:hover {
+  color: var(--ink-3);
+  background: transparent;
+  cursor: not-allowed;
+  transition: color var(--t-0) linear, background-color var(--t-0) linear;
+}
+
+/* ✕ 贴右上：和 .ovbox 的 h2 同一行，不额外占高度。 */
+.rnd-x {
+  position: absolute;
+  top: 12px;
+  right: 10px;
+}
+
+/* 本轮用完：00:00 转金色。
+   它不是「快没时间了」（那是 --danger 的 .low），而是这一轮已经用完。 */
+.session.ended .sremain {
+  color: var(--warn);
+}
+
+.session.ended .sbar i {
+  background: var(--warn);
+}
+
+.session.ended .sbar i::after {
+  background: var(--warn-hi);
+  box-shadow: 0 0 9px var(--warn);
+}
+
+/* 面板是固定 960（.hintp 自己按 max-width 收），所以 1024 与 1440 下两栏尺寸一致，
+   不需要窄屏回退 —— 只有 .stage 的内边距在变。 */

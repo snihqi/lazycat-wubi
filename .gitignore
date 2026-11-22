@@ -1,0 +1,14 @@
+node_modules/
+.DS_Store
+coverage/
+*.log
+
+# audit-ui 输出
+.audit-shots/
+
+# shot.mjs 输出（单页调试截图）
+.shot/
+
+# 构建产物：都不提交，由 GitHub Actions 现构建
+dist/
+dist-single/
